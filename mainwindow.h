@@ -24,7 +24,7 @@ public:
     ~MainWindow();
 
 public slots:
-    void fetchData();
+    void fetchData(); //for stock data requests from line edit input
     void loadRequestedStockData();
 
 };

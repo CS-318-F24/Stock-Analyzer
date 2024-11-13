@@ -37,3 +37,11 @@ StockData::StockData() {}
 
 
 StockData::~StockData() {}
+
+QString StockData::getTicker() {
+    return ticker;
+}
+
+QMap<Date, StockDataElement> StockData::getTimeSeries() {
+    return time_series;
+}

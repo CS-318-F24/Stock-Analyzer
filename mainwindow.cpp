@@ -18,19 +18,24 @@ MainWindow::MainWindow(QWidget *parent)
     //window layout and control panel layout
     app = new QWidget();
     setCentralWidget(app);
-    control_panel = new QWidget();
     main_layout = new QHBoxLayout(app);
 
+    control_panel = new QWidget();
     left_layout = new QVBoxLayout(control_panel);
 
     stock_picker = new QLineEdit("Enter stock ticker symbol");
     connect(stock_picker, &QLineEdit::returnPressed, this, &MainWindow::fetchData);
     left_layout->addWidget(stock_picker);
 
-    main_layout->addWidget(control_panel, 1, Qt::AlignCenter);
+    main_layout->addWidget(control_panel, 1, Qt::AlignLeft);
 }
 
 MainWindow::~MainWindow() {}
+
+void MainWindow::fetchData() {
+    curr_ticker = stock_picker->text();
+    AV_api->requestStockData(curr_ticker);
+}
 
 void MainWindow::loadRequestedStockData() {
 
@@ -55,18 +60,7 @@ void MainWindow::loadRequestedStockData() {
 
     //what to do here???
 
-    QJsonArray json_array;
-    if (json_doc.isArray()) {
-        json_array = json_doc.array();
-        qDebug() << "JSON Array:";
-    }
-
-
     stock_data_file.close();
 
 }
 
-void MainWindow::fetchData() {
-    curr_ticker = stock_picker->text();
-    AV_api->requestStockData(curr_ticker);
-}

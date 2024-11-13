@@ -9,18 +9,23 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 
+#include "stockdata.h"
+#include "stockdataelement.h"
 #include "filedownloader.h"
 
 class AlphaVantageAPI : public QObject
 {
     Q_OBJECT
 
-    QString time_series;
+    QString time_series_type;
+
     QString curr_ticker;
     FileDownloader *json_ctrl;
 
+    QMap<QString, StockData> stock_data_store;
+
 public:
-    AlphaVantageAPI(QString time_series="TIME_SERIES_DAILY");
+    AlphaVantageAPI(QString _time_series_type="TIME_SERIES_DAILY");
     ~AlphaVantageAPI();
 
     void requestStockData(QString ticker);
@@ -29,6 +34,7 @@ signals:
     void savedRequestedStockData();
 
 public slots:
+    void addTimeSeries();
     void saveJSON();
 
 };

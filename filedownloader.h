@@ -11,9 +11,13 @@ class FileDownloader : public QObject
 {
     Q_OBJECT
 
+    QNetworkAccessManager web_ctrl;
+    QByteArray downloaded_data;
+
 public:
     FileDownloader(QObject *parent = 0); //constructor
     virtual ~FileDownloader();
+
     QByteArray downloadedData() const;
     void makeCall(QUrl url);
 
@@ -23,9 +27,6 @@ signals:
 public slots:
     void fileDownloaded(QNetworkReply *reply);
 
-private:
-    QNetworkAccessManager web_ctrl;
-    QByteArray downloaded_data;
 };
 
 #endif // FILEDOWNLOADER_H
