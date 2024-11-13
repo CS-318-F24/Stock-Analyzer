@@ -12,12 +12,16 @@ SOURCES += \
     alphavantageapi.cpp \
     filedownloader.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    stockdata.cpp \
+    stockdataelement.cpp
 
 HEADERS += \
     alphavantageapi.h \
     filedownloader.h \
-    mainwindow.h
+    mainwindow.h \
+    stockdata.h \
+    stockdataelement.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
