@@ -26,6 +26,5 @@ public:
 public slots:
     void fetchData();
     void loadRequestedStockData();
-
 };
 #endif // MAINWINDOW_H

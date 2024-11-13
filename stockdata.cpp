@@ -2,22 +2,23 @@
 
 #include "stockdataelement.h"
 
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QString>
 
-StockData::StockData(QJsonObject _data) : time_series()
+StockData::StockData(QJsonObject _data)
+    : time_series()
 {
     QJsonObject meta_data = _data["Meta Data"].toObject();
     ticker = meta_data["2. Symbol"].toString();
 
     QJsonValue time_series_daily = _data["Time Series (Daily)"];
     QJsonObject ts;
-    if(time_series_daily.isObject()) {
+    if (time_series_daily.isObject()) {
         ts = time_series_daily.toObject();
     }
 
-    for(const auto &[key, value] : ts) {
+    for (const auto &[key, value] : ts) {
         Date candle_date = key;
 
         QJsonObject candle_obj = ts.value(key).toObject();
@@ -34,6 +35,5 @@ StockData::StockData(QJsonObject _data) : time_series()
 }
 
 StockData::StockData() {}
-
 
 StockData::~StockData() {}
