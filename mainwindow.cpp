@@ -1,6 +1,7 @@
 #include <QtWidgets>
 #include <QByteArray>
 #include <QString>
+#include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -51,14 +52,16 @@ void MainWindow::fetchData() {
 
 void MainWindow::renderRequestedStockData() {
     QLineSeries *lineSeries = new QLineSeries();
-    QMap<Date, StockDataElement> *source_data = AV_api->stock_data_store[curr_ticker]->getTimeSeries();
-    for(QMap<Date, StockDataElement>::const_iterator it = source_data->constBegin(); it != source_data->constEnd(); ++it) {
+    QMap<QDateTime, StockDataElement> *source_data = AV_api->stock_data_store[curr_ticker]->getTimeSeries();
+    for(QMap<QDateTime, StockDataElement>::const_iterator it = source_data->constBegin(); it != source_data->constEnd(); ++it) {
         if(it == source_data->constBegin()) {
             continue;
         }
-        auto prev = std::prev(it);
-        Date prev_date(prev.key());
-        lineSeries->append(prev.value().getClose(), it.value().getClose());
+        qreal close_price = it.value().getClose();
+
+        qDebug() << it.key() << it.value().getClose();
+
+        lineSeries->append(it.key().toMSecsSinceEpoch(), close_price);
     }
 
     QChart *close_time_series = new QChart();
@@ -69,9 +72,15 @@ void MainWindow::renderRequestedStockData() {
     close_time_series->createDefaultAxes();
 
     QChartView *close_time_series_view = new QChartView(close_time_series);
+    close_time_series_view->setFixedSize(800, 600);
     close_time_series_view->setRenderHint(QPainter::Antialiasing);
 
-    main_layout->addWidget(close_time_series_view, 0, Qt::AlignRight);
+    QDateTimeAxis *axisX = new QDateTimeAxis();
+    axisX->setFormat("yyyy-MM-dd"); // Display format
+    axisX->setTickCount(10); // Number of major ticks
+    close_time_series->setAxisX(axisX, lineSeries);
+
+    main_layout->addWidget(close_time_series_view, 2, Qt::AlignCenter);
 
 }
 

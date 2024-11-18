@@ -21,7 +21,7 @@ bool Date::operator<(const Date &other) const {
 
 
 //============== StockDataElement ===============//
-StockDataElement::StockDataElement(Date _date, float _open, float _high, float _low, float _close, float _volume) {
+StockDataElement::StockDataElement(QDateTime _date, float _open, float _high, float _low, float _close, float _volume) {
     open = _open;
     high = _high;
     low = _low;

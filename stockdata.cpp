@@ -19,7 +19,13 @@ StockData::StockData(QJsonObject _data) : time_series()
 
     for(QJsonObject::iterator it = ts.begin(); it != ts.end(); ++it)  {
         QString date_string = it.key();
-        Date candle_date(date_string);
+        int year = date_string.left(4).toInt();
+        int month = date_string.mid(5, 2).toInt();
+        int day = date_string.right(2).toInt();
+        QDate date(year, month, day);
+        QTime time_m(16, 0); //4pm for market close
+        QDateTime close_datetime(date, time_m, Qt::TimeZone);
+        QDateTime candle_date(date, time_m, Qt::TimeZone);
 
         QJsonObject candle_obj = ts.value(it.key()).toObject();
         float open = candle_obj["1. open"].toString().toFloat();
@@ -43,6 +49,6 @@ QString StockData::getTicker() {
     return ticker;
 }
 
-QMap<Date, StockDataElement> *StockData::getTimeSeries() {
+QMap<QDateTime, StockDataElement> *StockData::getTimeSeries() {
     return &time_series;
 }

@@ -2,6 +2,7 @@
 #define STOCKDATAELEMENT_H
 
 #include <QString>
+#include <QDateTime>
 
 
 //=============== Date ===============//
@@ -33,10 +34,10 @@ class StockDataElement
     float close;
     float volume;
 
-    Date date;
+    QDateTime date;
 
 public:
-    StockDataElement(Date _date, float _open, float _high, float _low, float _close, float _volume);
+    StockDataElement(QDateTime _date, float _open, float _high, float _low, float _close, float _volume);
     StockDataElement();
     ~StockDataElement();
 

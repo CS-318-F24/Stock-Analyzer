@@ -2,6 +2,7 @@
 #define STOCKDATA_H
 
 #include <QMap>
+#include <QDateTime>
 #include <QJsonObject>
 
 #include "stockdataelement.h"
@@ -10,7 +11,7 @@ class StockData
 {
 
     QString ticker;
-    QMap<Date, StockDataElement> time_series;
+    QMap<QDateTime, StockDataElement> time_series;
 
 public:
     StockData(QJsonObject _data);
@@ -18,7 +19,7 @@ public:
     ~StockData();
 
     QString getTicker();
-    QMap<Date, StockDataElement> *getTimeSeries();
+    QMap<QDateTime, StockDataElement> *getTimeSeries();
 
 };
 
