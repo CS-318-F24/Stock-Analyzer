@@ -11,6 +11,12 @@ class MainWindow : public QMainWindow
 
     AlphaVantageAPI *AV_api;
 
+    /*
+    QMenu *fileMenu;
+    QAction openFile;
+    QAction saveFile;
+    */
+
     QWidget *app;
     QHBoxLayout *main_layout; //layout for this window
     QVBoxLayout *left_layout;
@@ -28,6 +34,11 @@ public slots:
 
     void renderRequestedStockData();
     void loadRequestedStockData();
+
+    /*
+     * saveData();
+     *
+     */
 
 };
 #endif // MAINWINDOW_H

@@ -38,6 +38,7 @@ void AlphaVantageAPI::addTimeSeries() {
     StockData *requested_data = new StockData(time_series_obj);
 
     stock_data_store[requested_data->getTicker()] = requested_data;
+    //this->saveJSON();
 
     emit savedRequestedStockData();
 }
@@ -54,7 +55,7 @@ void AlphaVantageAPI::saveJSON() {
         test_json.write(json_data);
         test_json.close();
         qDebug() << "JSON data saved to file successfully!";
-        emit savedRequestedStockData();
+        //emit savedRequestedStockData();
     } else {
         qDebug() << "Error opening file for writing!";
     }

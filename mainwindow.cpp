@@ -23,7 +23,7 @@ QT_USE_NAMESPACE
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    AV_api = new AlphaVantageAPI();
+    AV_api = new AlphaVantageAPI("TIME_SERIES_DAILY");
     connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::renderRequestedStockData);
 
     //window layout and control panel layout
@@ -59,7 +59,7 @@ void MainWindow::renderRequestedStockData() {
         }
         qreal close_price = it.value().getClose();
 
-        qDebug() << it.key() << it.value().getClose();
+        //qDebug() << it.key() << it.value().getClose();
 
         lineSeries->append(it.key().toMSecsSinceEpoch(), close_price);
     }
