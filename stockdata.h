@@ -6,8 +6,6 @@
 
 #include "stockdataelement.h"
 
-typedef QString Date;
-
 class StockData
 {
 
@@ -20,7 +18,8 @@ public:
     ~StockData();
 
     QString getTicker();
-    QMap<Date, StockDataElement> getTimeSeries();
+    QMap<Date, StockDataElement> *getTimeSeries();
+
 };
 
 #endif // STOCKDATA_H

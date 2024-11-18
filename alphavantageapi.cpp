@@ -21,7 +21,7 @@ void AlphaVantageAPI::requestStockData(QString ticker) {
     json_ctrl = new FileDownloader();
     curr_ticker = ticker;
     connect(json_ctrl, &FileDownloader::downloaded, this, &AlphaVantageAPI::addTimeSeries);
-    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=EQ80DAAGFVN4J0QH").arg(time_series).arg(ticker);
+    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=EQ80DAAGFVN4J0QH").arg(time_series_type).arg(ticker);
     QUrl json_url(url_format);
     json_ctrl->makeCall(json_url);
 }
@@ -37,7 +37,9 @@ void AlphaVantageAPI::addTimeSeries() {
 
     StockData *requested_data = new StockData(time_series_obj);
 
-    stock_data_store[requested_data->getTicker()] = requested_data->getTimeSeries();
+    stock_data_store[requested_data->getTicker()] = requested_data;
+
+    emit savedRequestedStockData();
 }
 
 

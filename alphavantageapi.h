@@ -22,13 +22,13 @@ class AlphaVantageAPI : public QObject
     QString curr_ticker;
     FileDownloader *json_ctrl;
 
-    QMap<QString, StockData> stock_data_store;
-
 public:
     AlphaVantageAPI(QString _time_series_type="TIME_SERIES_DAILY");
     ~AlphaVantageAPI();
 
     void requestStockData(QString ticker);
+
+    QMap<QString, StockData*> stock_data_store;
 
 signals:
     void savedRequestedStockData();

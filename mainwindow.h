@@ -25,6 +25,8 @@ public:
 
 public slots:
     void fetchData(); //for stock data requests from line edit input
+
+    void renderRequestedStockData();
     void loadRequestedStockData();
 
 };
