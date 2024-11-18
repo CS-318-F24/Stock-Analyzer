@@ -5,7 +5,7 @@
 
 typedef QString Date;
 
-class StockDataElement:
+class StockDataElement
 {
     float open;
     float high;

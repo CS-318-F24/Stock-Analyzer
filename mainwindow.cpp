@@ -8,6 +8,11 @@
 #include "alphavantageapi.h"
 #include "filedownloader.h"
 #include "mainwindow.h"
+#include "stockgraph.h"
+#include "parser.h"
+
+#include "parser.h"
+// ...
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::loadRequestedStockData);
 
-    //window layout and control panel layout
+    // Window layout and control panel layout
     app = new QWidget();
     setCentralWidget(app);
     control_panel = new QWidget();
@@ -31,14 +36,22 @@ MainWindow::MainWindow(QWidget *parent)
     left_layout->addWidget(stock_picker);
 
     main_layout->addWidget(control_panel, 1, Qt::AlignCenter);
+
+    QString filePath = "Users/mthedlund/0318Project/stock_data/AAPL.json";
+    Parser parser; // Create an instance of the Parser class
+    QMap<QString, float> stockData = parser.parseStockDataFromJson(filePath); // Use the member function
+
+    StockGraph *graph = new StockGraph();
+    graph->plotData(stockData, "SampleTicker");
 }
+
 
 MainWindow::~MainWindow() {}
 
 void MainWindow::loadRequestedStockData()
 {
     QFile stock_data_file(
-        QString("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json")
+        QString("/Users/mthedlund/0318Project/stock_data/%1.json")
             .arg(curr_ticker));
     if (!stock_data_file.open(QIODevice::ReadOnly)) {
         qDebug() << "Error opening file for writing!";

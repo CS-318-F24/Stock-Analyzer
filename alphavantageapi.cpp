@@ -36,7 +36,7 @@ void AlphaVantageAPI::saveJSON()
     //QJsonDocument json_doc = QJsonDocument::fromJson(json_data);
 
     QString path
-        = QString("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json")
+        = QString("/Users/mthedlund/0318Project/stock_data/%1.json")
               .arg(curr_ticker);
     QFile test_json(path);
     if (test_json.open(QIODevice::WriteOnly)) {

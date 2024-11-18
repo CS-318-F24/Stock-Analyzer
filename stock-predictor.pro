@@ -1,5 +1,7 @@
 QT       += core gui
 QT       += network
+QT       += charts
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -13,15 +15,19 @@ SOURCES += \
     filedownloader.cpp \
     main.cpp \
     mainwindow.cpp \
+    parser.cpp \
     stockdata.cpp \
-    stockdataelement.cpp
+    stockdataelement.cpp \
+    stockgraph.cpp
 
 HEADERS += \
     alphavantageapi.h \
     filedownloader.h \
     mainwindow.h \
+    parser.h \
     stockdata.h \
-    stockdataelement.h
+    stockdataelement.h \
+    stockgraph.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
