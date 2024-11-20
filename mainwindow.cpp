@@ -5,12 +5,13 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QValueAxis>
 
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QDateTimeAxis>
-#include <QtCharts/QValueAxis>
+
 
 #include "mainwindow.h"
 #include "alphavantageapi.h"
@@ -23,23 +24,36 @@ QT_USE_NAMESPACE
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+
+    setWindowTitle("Stock Data Viewer");
+
     AV_api = new AlphaVantageAPI("TIME_SERIES_DAILY");
     connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::renderRequestedStockData);
 
     //window layout and control panel layout
     app = new QWidget();
     setCentralWidget(app);
-    main_layout = new QHBoxLayout(app);
+    main_layout = new QVBoxLayout(app);
 
-    control_panel = new QWidget();
-    left_layout = new QVBoxLayout(control_panel);
+    app_title = new QLabel("Stock Data Viewer");
+    app_title->setAlignment(Qt::AlignCenter);
+    main_layout->addWidget(app_title);
 
-    stock_picker = new QLineEdit("Enter stock ticker symbol (e.g. 'AAPL')");
+    control_layout = new QHBoxLayout();
+    search_label = new QLabel("Enter Stock Ticker Symbol:");
+    control_layout->addWidget(search_label);
+
+    stock_picker = new QLineEdit();
+    stock_picker->setPlaceholderText("ex: AAPL");
     connect(stock_picker, &QLineEdit::returnPressed, this, &MainWindow::fetchData);
-    stock_picker->setFixedSize(240, 20);
-    left_layout->addWidget(stock_picker);
+    control_layout->addWidget(stock_picker);
 
-    main_layout->addWidget(control_panel, 1, Qt::AlignLeft);
+    main_layout->addLayout(control_layout);
+
+    tabs = new QTabWidget();
+    tabs->setTabsClosable(true);
+    connect(tabs, &QTabWidget::tabCloseRequested, tabs, &QTabWidget::removeTab);
+    main_layout->addWidget(tabs);
 }
 
 MainWindow::~MainWindow() {}
@@ -69,18 +83,36 @@ void MainWindow::renderRequestedStockData() {
     close_time_series->addSeries(lineSeries);
     QString title = QString("%1 Close Price").arg(curr_ticker);
     close_time_series->setTitle(title);
-    close_time_series->createDefaultAxes();
+    // close_time_series->createDefaultAxes();
+
+    QDateTimeAxis *axisX = new QDateTimeAxis();
+    axisX->setFormat("yyyy-MM-dd");
+    axisX->setTitleText("Date");
+    axisX->setTickCount(10); // Number of major ticks
+    close_time_series->addAxis(axisX, Qt::AlignBottom);
+    lineSeries->attachAxis(axisX);
+
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setTitleText("Price");
+    close_time_series->addAxis(axisY, Qt::AlignLeft);
+    lineSeries->attachAxis(axisY);
 
     QChartView *close_time_series_view = new QChartView(close_time_series);
     close_time_series_view->setFixedSize(800, 600);
     close_time_series_view->setRenderHint(QPainter::Antialiasing);
 
-    QDateTimeAxis *axisX = new QDateTimeAxis();
-    axisX->setFormat("yyyy-MM-dd"); // Display format
-    axisX->setTickCount(10); // Number of major ticks
-    close_time_series->setAxisX(axisX, lineSeries);
+    // QDateTimeAxis *axisX = new QDateTimeAxis();
+    // axisX->setFormat("yyyy-MM-dd"); // Display format
+    // axisX->setTickCount(10); // Number of major ticks
+    // close_time_series->setAxisX(axisX, lineSeries);
 
-    main_layout->addWidget(close_time_series_view, 2, Qt::AlignCenter);
+    // main_layout->addWidget(close_time_series_view, 2, Qt::AlignCenter);
+    QWidget *tabWidget = new QWidget();
+    QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
+    tabLayout->addWidget(close_time_series_view);
+
+    tabs->addTab(tabWidget, curr_ticker);
+    tabs->setCurrentWidget(tabWidget);
 
 }
 

@@ -18,10 +18,14 @@ class MainWindow : public QMainWindow
     */
 
     QWidget *app;
-    QHBoxLayout *main_layout; //layout for this window
-    QVBoxLayout *left_layout;
+    QVBoxLayout *main_layout; //layout for this window
+    QHBoxLayout *control_layout;
 
-    QWidget *control_panel;
+    QLabel *app_title;
+    QLabel *search_label;
+    QTabWidget *tabs;
+
+    // QWidget *control_panel;
     QLineEdit *stock_picker;
     QString curr_ticker;
 
