@@ -54,6 +54,13 @@ MainWindow::MainWindow(QWidget *parent)
     tabs->setTabsClosable(true);
     connect(tabs, &QTabWidget::tabCloseRequested, tabs, &QTabWidget::removeTab);
     main_layout->addWidget(tabs);
+
+    //here
+    compare = new QPushButton("compare");
+    //connect
+    //also move compare and maybe only have it as option when 2 stocks are loaded.
+    main_layout->addWidget(compare);
+
 }
 
 MainWindow::~MainWindow() {}

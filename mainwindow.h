@@ -24,6 +24,8 @@ class MainWindow : public QMainWindow
     QLabel *app_title;
     QLabel *search_label;
     QTabWidget *tabs;
+    QPushButton *compare;
+
 
     // QWidget *control_panel;
     QLineEdit *stock_picker;
