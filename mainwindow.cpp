@@ -30,6 +30,12 @@ MainWindow::MainWindow(QWidget *parent)
     AV_api = new AlphaVantageAPI("TIME_SERIES_DAILY");
     connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::renderRequestedStockData);
 
+    //curr_ticker = "AAPL";
+    //AV_api->fetchData();
+    //curr_ticker = "IBM";
+    //AV_api->fetchData();
+    //curr_ticker = "PEP";
+
     //window layout and control panel layout
     app = new QWidget();
     setCentralWidget(app);
@@ -50,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     main_layout->addLayout(control_layout);
 
+    //tabs for displaying more than one stock
     tabs = new QTabWidget();
     tabs->setTabsClosable(true);
     connect(tabs, &QTabWidget::tabCloseRequested, tabs, &QTabWidget::removeTab);
@@ -65,22 +72,26 @@ void MainWindow::fetchData() {
 
 
 void MainWindow::renderRequestedStockData() {
-    QLineSeries *lineSeries = new QLineSeries();
-    QMap<QDateTime, StockDataElement> *source_data = AV_api->stock_data_store[curr_ticker]->getTimeSeries();
-    for(QMap<QDateTime, StockDataElement>::const_iterator it = source_data->constBegin(); it != source_data->constEnd(); ++it) {
-        if(it == source_data->constBegin()) {
-            continue;
-        }
-        qreal close_price = it.value().getClose();
+    StockData *stock_to_render = AV_api->getStockData(curr_ticker);
+    QMap<QDateTime, StockDataElement> source_data = stock_to_render->getTimeSeries();
+    QMap<QDateTime, float> fifty_day_ma = stock_to_render->getMovingAvgSeries();
+    qDebug() << "attained moving average.";
 
-        //qDebug() << it.key() << it.value().getClose();
+    QLineSeries *close_price_line_series = new QLineSeries();
+    QLineSeries *fifty_day_ma_line_series = new QLineSeries();
+    for(QMap<QDateTime, float>::const_iterator it = fifty_day_ma.constBegin(); it != fifty_day_ma.constEnd(); ++it) {
+        qreal close_price = source_data[it.key()].getClose();
+        close_price_line_series->append(it.key().toMSecsSinceEpoch(), close_price);
 
-        lineSeries->append(it.key().toMSecsSinceEpoch(), close_price);
+        fifty_day_ma_line_series->append(it.key().toMSecsSinceEpoch(), it.value());
     }
+
+    qDebug() << "fifty day line series";
 
     QChart *close_time_series = new QChart();
     close_time_series->legend()->hide();
-    close_time_series->addSeries(lineSeries);
+    close_time_series->addSeries(close_price_line_series);
+    close_time_series->addSeries(fifty_day_ma_line_series);
     QString title = QString("%1 Close Price").arg(curr_ticker);
     close_time_series->setTitle(title);
     // close_time_series->createDefaultAxes();
@@ -90,12 +101,15 @@ void MainWindow::renderRequestedStockData() {
     axisX->setTitleText("Date");
     axisX->setTickCount(10); // Number of major ticks
     close_time_series->addAxis(axisX, Qt::AlignBottom);
-    lineSeries->attachAxis(axisX);
+    close_price_line_series->attachAxis(axisX);
+    fifty_day_ma_line_series->attachAxis(axisX);
+
 
     QValueAxis *axisY = new QValueAxis;
     axisY->setTitleText("Price");
     close_time_series->addAxis(axisY, Qt::AlignLeft);
-    lineSeries->attachAxis(axisY);
+    close_price_line_series->attachAxis(axisY);
+    fifty_day_ma_line_series->attachAxis(axisY);
 
     QChartView *close_time_series_view = new QChartView(close_time_series);
     close_time_series_view->setFixedSize(800, 600);

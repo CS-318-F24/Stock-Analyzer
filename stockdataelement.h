@@ -4,27 +4,6 @@
 #include <QString>
 #include <QDateTime>
 
-
-//=============== Date ===============//
-class Date
-{
-
-public:
-    Date(QString &_date);
-    Date();
-    ~Date();
-
-    QString toString() const;
-
-    bool operator<(const Date &date2) const;
-
-private:
-
-    QString date;
-};
-
-
-
 //============= StockDataElement ===============//
 class StockDataElement
 {

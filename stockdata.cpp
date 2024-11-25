@@ -6,7 +6,7 @@
 
 #include "stockdataelement.h"
 
-StockData::StockData(QJsonObject _data) : time_series()
+StockData::StockData(QJsonObject _data) : time_series(), moving_avg_series()
 {
     QJsonObject meta_data = _data["Meta Data"].toObject();
     ticker = meta_data["2. Symbol"].toString();
@@ -24,7 +24,6 @@ StockData::StockData(QJsonObject _data) : time_series()
         int day = date_string.right(2).toInt();
         QDate date(year, month, day);
         QTime time_m(16, 0); //4pm for market close
-        QDateTime close_datetime(date, time_m, Qt::TimeZone);
         QDateTime candle_date(date, time_m, Qt::TimeZone);
 
         QJsonObject candle_obj = ts.value(it.key()).toObject();
@@ -38,6 +37,8 @@ StockData::StockData(QJsonObject _data) : time_series()
 
         time_series.insert(candle_date, el);
     }
+
+    qDebug() << "stock data made for " << ticker << ".";
 }
 
 StockData::StockData() {}
@@ -49,6 +50,46 @@ QString StockData::getTicker() {
     return ticker;
 }
 
-QMap<QDateTime, StockDataElement> *StockData::getTimeSeries() {
-    return &time_series;
+QMap<QDateTime, StockDataElement> StockData::getTimeSeries() {
+    return time_series;
+}
+
+QMap<QDateTime, float> StockData::getMovingAvgSeries(QString type) {
+    if(!(type == "fifty-day" || type == "two-hundred-day")) {
+        qDebug() << "error: moving average range not supported; supports 'fifty-day' and 'two-hundred-day' moving average.";
+        return QMap<QDateTime, float>(); //return empty map
+    }
+    if(!(moving_avg_series.isEmpty()) && moving_avg_type == type) {
+        return moving_avg_series;
+    }
+    moving_avg_type = type;
+    int window_size;
+    if(moving_avg_type == "fifty-day") {
+        window_size = 50;
+    } else {
+        window_size = 200;
+    }
+
+    qDebug() << "getting moving average...";
+
+    QList<float> window(window_size);
+    for(QMap<QDateTime, StockDataElement>::const_iterator it = time_series.constBegin(); it != time_series.constEnd(); ++it) {
+        window.append(it.value().getClose());
+        if(window.size() < window_size) {
+            continue;
+        }
+
+        //calculate avg over window
+        float moving_avg = 0;
+        for(int i = 0; i < window_size; ++i) {
+            moving_avg += window[i];
+        }
+        moving_avg = moving_avg / window_size;
+        moving_avg_series[it.key()] = moving_avg;
+        //qDebug() << "moving average at " << it.key() << " is " << moving_avg;
+
+        window.removeFirst();
+    }
+
+    return moving_avg_series;
 }

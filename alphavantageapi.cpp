@@ -18,6 +18,12 @@ AlphaVantageAPI::AlphaVantageAPI(QString _time_series_type) : stock_data_store()
 AlphaVantageAPI::~AlphaVantageAPI() {}
 
 void AlphaVantageAPI::requestStockData(QString ticker) {
+    if(this->stock_data_store[ticker]) {
+        emit savedRequestedStockData();
+        qDebug() << "stock data is cached: no API call necessary for " << ticker;
+        return;
+    }
+
     json_ctrl = new FileDownloader();
     curr_ticker = ticker;
     connect(json_ctrl, &FileDownloader::downloaded, this, &AlphaVantageAPI::addTimeSeries);
@@ -25,6 +31,7 @@ void AlphaVantageAPI::requestStockData(QString ticker) {
     QUrl json_url(url_format);
     json_ctrl->makeCall(json_url);
 }
+
 
 void AlphaVantageAPI::addTimeSeries() {
     QByteArray time_series_data = json_ctrl->downloadedData();
@@ -35,9 +42,10 @@ void AlphaVantageAPI::addTimeSeries() {
         time_series_obj = time_series_doc.object();
     }
 
-    StockData *requested_data = new StockData(time_series_obj);
 
-    stock_data_store[requested_data->getTicker()] = requested_data;
+    StockData *requested_stock_data = new StockData(time_series_obj);
+
+    stock_data_store.insert(requested_stock_data->getTicker(), requested_stock_data);
     //this->saveJSON();
 
     emit savedRequestedStockData();
@@ -58,5 +66,21 @@ void AlphaVantageAPI::saveJSON() {
         //emit savedRequestedStockData();
     } else {
         qDebug() << "Error opening file for writing!";
+    }
+}
+
+
+// getter for time series type
+QString AlphaVantageAPI::type() {
+    return time_series_type;
+}
+
+// getter for stock data
+StockData *AlphaVantageAPI::getStockData(QString ticker) {
+    if(stock_data_store.contains(ticker)){
+        return stock_data_store[ticker];
+    } else {
+        qDebug() << "error: data not found for" << ticker << "\nplease fetch data first";
+        return NULL;
     }
 }

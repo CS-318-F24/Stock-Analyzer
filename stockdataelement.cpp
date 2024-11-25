@@ -1,25 +1,6 @@
 #include "stockdataelement.h"
 
 
-
-//========== Date implementation ===========//
-Date::Date(QString &_date) {
-    date = _date;
-}
-
-Date::Date() {}
-
-Date::~Date() {}
-
-QString Date::toString() const{
-    return date;
-}
-
-bool Date::operator<(const Date &other) const {
-    return this->date < other.date;
-}
-
-
 //============== StockDataElement ===============//
 StockDataElement::StockDataElement(QDateTime _date, float _open, float _high, float _low, float _close, float _volume) {
     open = _open;
