@@ -17,17 +17,20 @@ class MainWindow : public QMainWindow
     QAction saveFile;
     */
 
+    //layout for app window
     QWidget *app;
-    QVBoxLayout *main_layout; //layout for this window
-    QHBoxLayout *control_layout;
-
     QLabel *app_title;
-    QLabel *search_label;
-    QTabWidget *tabs;
+    QVBoxLayout *main_layout;
 
-    // QWidget *control_panel;
+    QHBoxLayout *dashboard_layout;
+
+    QVBoxLayout *control_layout;
+    QLabel *search_label;
     QLineEdit *stock_picker;
-    QString curr_ticker;
+    QLabel *portfolio_label;
+    QTableWidget *portfolio_viewer;
+
+    QTabWidget *tabs;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -35,8 +38,10 @@ public:
 
 public slots:
     void fetchData(); //for stock data requests from line edit input
+    void saveFileNamePrompt();
 
-    void renderRequestedStockData();
+    void renderRequestedStockData(QString ticker);
+    void addRequestedStockData(QString ticker);
     void loadRequestedStockData();
 
     /*

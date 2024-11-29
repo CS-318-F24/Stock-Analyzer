@@ -25,54 +25,119 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
 
-    setWindowTitle("Stock Data Viewer");
+    setWindowTitle("Portfolio Maker");
 
+    //api for handling stock data
     AV_api = new AlphaVantageAPI("TIME_SERIES_DAILY");
     connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::renderRequestedStockData);
+    connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::addRequestedStockData);
 
-    //curr_ticker = "AAPL";
-    //AV_api->fetchData();
-    //curr_ticker = "IBM";
-    //AV_api->fetchData();
-    //curr_ticker = "PEP";
-
-    //window layout and control panel layout
-    app = new QWidget();
+    //main window layout
+    app = new QWidget(this);
     setCentralWidget(app);
     main_layout = new QVBoxLayout(app);
 
-    app_title = new QLabel("Stock Data Viewer");
-    app_title->setAlignment(Qt::AlignCenter);
+    //app window title
+    app_title = new QLabel("# Portfolio Maker");
+    app_title->setTextFormat(Qt::MarkdownText);
+    app_title->setAlignment(Qt::AlignLeft);
     main_layout->addWidget(app_title);
 
-    control_layout = new QHBoxLayout();
-    search_label = new QLabel("Enter Stock Ticker Symbol:");
+    //main dashboard layout
+    dashboard_layout = new QHBoxLayout();
+
+    //control panel layout
+    control_layout = new QVBoxLayout();
+
+    search_label = new QLabel("#### Enter Stock Ticker Symbol:");
+    search_label->setTextFormat(Qt::MarkdownText);
     control_layout->addWidget(search_label);
 
     stock_picker = new QLineEdit();
     stock_picker->setPlaceholderText("ex: AAPL");
     connect(stock_picker, &QLineEdit::returnPressed, this, &MainWindow::fetchData);
     control_layout->addWidget(stock_picker);
+    dashboard_layout->addLayout(control_layout);
 
-    main_layout->addLayout(control_layout);
+    portfolio_label = new QLabel("## Portfolio:");
+    portfolio_label->setTextFormat(Qt::MarkdownText);
+    control_layout->addWidget(portfolio_label);
 
-    //tabs for displaying more than one stock
+    portfolio_viewer = new QTableWidget();
+    portfolio_viewer->setMinimumSize(300, 175);
+    portfolio_viewer->setColumnCount(3);
+    QTableWidgetItem *name = new QTableWidgetItem("Stock Name:");
+    portfolio_viewer->setHorizontalHeaderItem(0, name);
+    QTableWidgetItem *returns = new QTableWidgetItem("Expected Returns:");
+    portfolio_viewer->setHorizontalHeaderItem(1, returns);
+    QTableWidgetItem *risk = new QTableWidgetItem("Risk(covariance):");
+    portfolio_viewer->setHorizontalHeaderItem(2, risk);
+    control_layout->addWidget(portfolio_viewer);
+
+    //tabs for displaying stock close price time series
     tabs = new QTabWidget();
+    tabs->setMinimumSize(600, 400);
     tabs->setTabsClosable(true);
     connect(tabs, &QTabWidget::tabCloseRequested, tabs, &QTabWidget::removeTab);
-    main_layout->addWidget(tabs);
+    dashboard_layout->addWidget(tabs);
+
+    main_layout->addLayout(dashboard_layout);
 }
 
 MainWindow::~MainWindow() {}
 
+//file save and open helpers
+void MainWindow::saveFileNamePrompt() {
+    AV_api->setSaving(true);
+    QString fileName = QFileDialog::getSaveFileName(nullptr);
+    if (!(fileName.isEmpty())) {
+        qDebug() << fileName;
+        AV_api->setSaveLocation(fileName);
+        return;
+    } else {
+        return;
+    }
+}
+
 void MainWindow::fetchData() {
-    curr_ticker = stock_picker->text();
-    AV_api->requestStockData(curr_ticker);
+    //dialog prompt for saving or not saving
+    QDialog dialog;
+    QDialogButtonBox *saveDialog = new QDialogButtonBox(QDialogButtonBox::Yes | QDialogButtonBox::No, &dialog);
+
+    connect(saveDialog, &QDialogButtonBox::accepted, this, &MainWindow::saveFileNamePrompt);
+    connect(saveDialog, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(saveDialog, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+    int click_val = dialog.exec();
+
+    if(click_val == 0) {
+        AV_api->setSaving(false);
+    }
+
+    AV_api->requestStockData(stock_picker->text());
 }
 
 
-void MainWindow::renderRequestedStockData() {
-    StockData *stock_to_render = AV_api->getStockData(curr_ticker);
+
+//slots for adding new (requested) stock data to dashboard
+void MainWindow::addRequestedStockData(QString ticker) {
+    StockData *stock = AV_api->getStockData(ticker);
+    int row_count = portfolio_viewer->rowCount();
+    portfolio_viewer->setRowCount(++row_count);
+    row_count = portfolio_viewer->rowCount();
+
+    QTableWidgetItem *stock_entry = new QTableWidgetItem(ticker);
+    portfolio_viewer->setItem(row_count, 0, stock_entry);
+
+
+    //add expected return
+    //risk
+}
+
+void MainWindow::renderRequestedStockData(QString ticker) {
+    qDebug() << ticker;
+    StockData *stock_to_render = AV_api->getStockData(ticker);
+
     QMap<QDateTime, StockDataElement> source_data = stock_to_render->getTimeSeries();
     QMap<QDateTime, float> fifty_day_ma = stock_to_render->getMovingAvgSeries();
     qDebug() << "attained moving average.";
@@ -92,14 +157,14 @@ void MainWindow::renderRequestedStockData() {
     close_time_series->legend()->hide();
     close_time_series->addSeries(close_price_line_series);
     close_time_series->addSeries(fifty_day_ma_line_series);
-    QString title = QString("%1 Close Price").arg(curr_ticker);
+    QString title = QString("%1 Close Price").arg(ticker);
     close_time_series->setTitle(title);
     // close_time_series->createDefaultAxes();
 
     QDateTimeAxis *axisX = new QDateTimeAxis();
     axisX->setFormat("yyyy-MM-dd");
     axisX->setTitleText("Date");
-    axisX->setTickCount(10); // Number of major ticks
+    axisX->setTickCount(5); // Number of major ticks
     close_time_series->addAxis(axisX, Qt::AlignBottom);
     close_price_line_series->attachAxis(axisX);
     fifty_day_ma_line_series->attachAxis(axisX);
@@ -112,20 +177,15 @@ void MainWindow::renderRequestedStockData() {
     fifty_day_ma_line_series->attachAxis(axisY);
 
     QChartView *close_time_series_view = new QChartView(close_time_series);
-    close_time_series_view->setFixedSize(800, 600);
+    close_time_series_view->setMinimumSize(400, 300);
+    //close_time_series_view->setMaximumSize(600, 400);
     close_time_series_view->setRenderHint(QPainter::Antialiasing);
 
-    // QDateTimeAxis *axisX = new QDateTimeAxis();
-    // axisX->setFormat("yyyy-MM-dd"); // Display format
-    // axisX->setTickCount(10); // Number of major ticks
-    // close_time_series->setAxisX(axisX, lineSeries);
-
-    // main_layout->addWidget(close_time_series_view, 2, Qt::AlignCenter);
     QWidget *tabWidget = new QWidget();
     QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
     tabLayout->addWidget(close_time_series_view);
 
-    tabs->addTab(tabWidget, curr_ticker);
+    tabs->addTab(tabWidget, ticker);
     tabs->setCurrentWidget(tabWidget);
 
 }
@@ -133,7 +193,7 @@ void MainWindow::renderRequestedStockData() {
 
 void MainWindow::loadRequestedStockData() {
 
-    QFile stock_data_file(QString("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json").arg(curr_ticker));
+    QFile stock_data_file = QFile("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json");
     if (!stock_data_file.open(QIODevice::ReadOnly)) {
         qDebug() << "Error opening file for writing!";
         return;
