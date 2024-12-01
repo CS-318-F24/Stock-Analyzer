@@ -44,6 +44,8 @@ public slots:
     void addRequestedStockData(QString ticker);
     void loadRequestedStockData();
 
+    void simulateGBM();
+
     /*
      * saveData();
      *

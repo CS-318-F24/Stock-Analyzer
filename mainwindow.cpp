@@ -82,6 +82,12 @@ MainWindow::MainWindow(QWidget *parent)
     dashboard_layout->addWidget(tabs);
 
     main_layout->addLayout(dashboard_layout);
+
+    // Add 'Simulate GBM' button
+    QPushButton *simulateGBMButton = new QPushButton("Simulate GBM");
+    connect(simulateGBMButton, &QPushButton::clicked, this, &MainWindow::simulateGBM);
+    control_layout->addWidget(simulateGBMButton);
+
 }
 
 MainWindow::~MainWindow() {}
@@ -216,5 +222,58 @@ void MainWindow::loadRequestedStockData() {
 
     stock_data_file.close();
 
+}
+
+void MainWindow::simulateGBM() {
+    QString ticker = stock_picker->text();
+    float T = 1.0;  // years
+    int steps = 252;
+
+    QChart *chart = new QChart();
+    chart->setTitle("Simulated GBM Paths");
+    chart->legend()->hide();
+
+    // Generate multiple paths (5)
+    for (int i = 0; i < 5; ++i) {
+        QVector<QPointF> gbmPath = AV_api->simulateGBM(ticker, T, steps);
+        if (gbmPath.isEmpty()) {
+            qDebug() << "GBM simulation failed for ticker:" << ticker;
+            continue;
+        }
+
+        // Create a series for each path
+        QLineSeries *series = new QLineSeries();
+        for (const auto &point : gbmPath) {
+            series->append(point);
+        }
+        chart->addSeries(series);
+    }
+
+    // Create axes
+    QValueAxis *axisX = new QValueAxis;
+    axisX->setTitleText("Time (Years)");
+    axisX->setLabelFormat("%.2f");
+    chart->addAxis(axisX, Qt::AlignBottom);
+
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setTitleText("Price");
+    axisY->setLabelFormat("%.2f");
+    chart->addAxis(axisY, Qt::AlignLeft);
+
+    for (QAbstractSeries *series : chart->series()) {
+        series->attachAxis(axisX);
+        series->attachAxis(axisY);
+    }
+
+    // Create a chart view
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    // Add the chart view to a new tab
+    QWidget *tabWidget = new QWidget();
+    QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
+    tabLayout->addWidget(chartView);
+    tabs->addTab(tabWidget, "GBM Predictions");
+    tabs->setCurrentWidget(tabWidget);
 }
 
