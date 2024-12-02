@@ -42,6 +42,10 @@ public:
     int numStoredStocks();
     QVector<QString> stockList();
 
+    QVector<QPointF> simulateGBM(QString ticker, float T, int steps);
+    float calculateVolatility(QMap<QDateTime, StockDataElement> timeSeries);
+    float calculateAverageReturn(QMap<QDateTime, StockDataElement> timeSeries);
+
 signals:
     void savedRequestedStockData(QString ticker);
 

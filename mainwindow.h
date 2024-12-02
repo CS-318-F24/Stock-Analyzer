@@ -43,6 +43,7 @@ public slots:
     void renderRequestedStockData(QString ticker);
     void addRequestedStockData(QString ticker);
 
+
     void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
 
     void removeStockWhenChartClosed(int index);
@@ -52,6 +53,10 @@ public slots:
 
     //old, may deprecate
     void loadRequestedStockData();
+    
+    void simulateGBM();
+
+
 
 };
 #endif // MAINWINDOW_H
