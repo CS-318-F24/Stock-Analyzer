@@ -23,6 +23,7 @@ class MainWindow : public QMainWindow
 
     QLabel *app_title;
     QLabel *search_label;
+    QLabel *compareStats;
     QTabWidget *tabs;
     QPushButton *compare;
 
@@ -40,6 +41,7 @@ public slots:
 
     void renderRequestedStockData();
     void loadRequestedStockData();
+    void compareStocks();
 
     /*
      * saveData();

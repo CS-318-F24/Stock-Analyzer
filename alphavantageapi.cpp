@@ -21,7 +21,7 @@ void AlphaVantageAPI::requestStockData(QString ticker) {
     json_ctrl = new FileDownloader();
     curr_ticker = ticker;
     connect(json_ctrl, &FileDownloader::downloaded, this, &AlphaVantageAPI::addTimeSeries);
-    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=EQ80DAAGFVN4J0QH").arg(time_series_type).arg(ticker);
+    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=KLETJFYEAXS68JWP").arg(time_series_type).arg(ticker);
     QUrl json_url(url_format);
     json_ctrl->makeCall(json_url);
 }
@@ -49,7 +49,7 @@ void AlphaVantageAPI::saveJSON() {
     //qDebug() << json_data;
     //QJsonDocument json_doc = QJsonDocument::fromJson(json_data);
 
-    QString path = QString("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json").arg(curr_ticker);
+    QString path = QString("/Users/mthedlund/0318Project/stock_data/%1.json").arg(curr_ticker);
     QFile test_json(path);
     if (test_json.open(QIODevice::WriteOnly)) {
         test_json.write(json_data);
