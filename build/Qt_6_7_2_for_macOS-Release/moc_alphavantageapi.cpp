@@ -39,6 +39,7 @@ constexpr auto qt_meta_stringdata_CLASSAlphaVantageAPIENDCLASS = QtMocHelpers::s
     "AlphaVantageAPI",
     "savedRequestedStockData",
     "",
+    "ticker",
     "addTimeSeries",
     "saveJSON"
 );
@@ -61,18 +62,18 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSAlphaVantageAPIENDCLASS[] = {
        1,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   32,    2, 0x06,    1 /* Public */,
+       1,    1,   32,    2, 0x06,    1 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       3,    0,   33,    2, 0x0a,    2 /* Public */,
-       4,    0,   34,    2, 0x0a,    3 /* Public */,
+       4,    0,   35,    2, 0x0a,    3 /* Public */,
+       5,    1,   36,    2, 0x0a,    4 /* Public */,
 
  // signals: parameters
-    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,    3,
 
  // slots: parameters
     QMetaType::Void,
-    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,    3,
 
        0        // eod
 };
@@ -88,10 +89,12 @@ Q_CONSTINIT const QMetaObject AlphaVantageAPI::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<AlphaVantageAPI, std::true_type>,
         // method 'savedRequestedStockData'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>,
         // method 'addTimeSeries'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'saveJSON'
-        QtPrivate::TypeAndForceComplete<void, std::false_type>
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>
     >,
     nullptr
 } };
@@ -102,22 +105,21 @@ void AlphaVantageAPI::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         auto *_t = static_cast<AlphaVantageAPI *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->savedRequestedStockData(); break;
+        case 0: _t->savedRequestedStockData((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         case 1: _t->addTimeSeries(); break;
-        case 2: _t->saveJSON(); break;
+        case 2: _t->saveJSON((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
-            using _t = void (AlphaVantageAPI::*)();
+            using _t = void (AlphaVantageAPI::*)(QString );
             if (_t _q_method = &AlphaVantageAPI::savedRequestedStockData; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 0;
                 return;
             }
         }
     }
-    (void)_a;
 }
 
 const QMetaObject *AlphaVantageAPI::metaObject() const
@@ -151,8 +153,9 @@ int AlphaVantageAPI::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void AlphaVantageAPI::savedRequestedStockData()
+void AlphaVantageAPI::savedRequestedStockData(QString _t1)
 {
-    QMetaObject::activate(this, &staticMetaObject, 0, nullptr);
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
 }
 QT_WARNING_POP

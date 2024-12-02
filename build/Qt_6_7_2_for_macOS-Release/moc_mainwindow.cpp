@@ -11,6 +11,7 @@
 #include <QtGui/qscreen.h>
 #include <QtNetwork/QSslError>
 #include <QtCore/qmetatype.h>
+#include <QtCore/QList>
 
 #include <QtCore/qtmochelpers.h>
 
@@ -41,7 +42,15 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "MainWindow",
     "fetchData",
     "",
+    "saveFileNamePrompt",
     "renderRequestedStockData",
+    "ticker",
+    "addRequestedStockData",
+    "removeStocksFromPortfolio",
+    "stocks_to_delete",
+    "removeStockWhenChartClosed",
+    "index",
+    "changeDisplayedChart",
     "loadRequestedStockData",
     "compareStocks"
 );
@@ -56,7 +65,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       4,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -64,13 +73,23 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSMainWindowENDCLASS[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    0,   38,    2, 0x0a,    1 /* Public */,
-       3,    0,   39,    2, 0x0a,    2 /* Public */,
-       4,    0,   40,    2, 0x0a,    3 /* Public */,
-       5,    0,   41,    2, 0x0a,    4 /* Public */,
+       1,    0,   68,    2, 0x0a,    1 /* Public */,
+       3,    0,   69,    2, 0x0a,    2 /* Public */,
+       4,    1,   70,    2, 0x0a,    3 /* Public */,
+       6,    1,   73,    2, 0x0a,    5 /* Public */,
+       7,    1,   76,    2, 0x0a,    7 /* Public */,
+       9,    1,   79,    2, 0x0a,    9 /* Public */,
+      11,    0,   82,    2, 0x0a,   11 /* Public */,
+      12,    0,   83,    2, 0x0a,   12 /* Public */,
+      13,    0,   84,    2, 0x0a,   13 /* Public */,
 
  // slots: parameters
     QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString,    5,
+    QMetaType::Void, QMetaType::QString,    5,
+    QMetaType::Void, QMetaType::QStringList,    8,
+    QMetaType::Void, QMetaType::Int,   10,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -89,7 +108,21 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<MainWindow, std::true_type>,
         // method 'fetchData'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'saveFileNamePrompt'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'renderRequestedStockData'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>,
+        // method 'addRequestedStockData'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QString, std::false_type>,
+        // method 'removeStocksFromPortfolio'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QList<QString>, std::false_type>,
+        // method 'removeStockWhenChartClosed'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<int, std::false_type>,
+        // method 'changeDisplayedChart'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'loadRequestedStockData'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
@@ -106,13 +139,17 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         (void)_t;
         switch (_id) {
         case 0: _t->fetchData(); break;
-        case 1: _t->renderRequestedStockData(); break;
-        case 2: _t->loadRequestedStockData(); break;
-        case 3: _t->compareStocks(); break;
+        case 1: _t->saveFileNamePrompt(); break;
+        case 2: _t->renderRequestedStockData((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 3: _t->addRequestedStockData((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 4: _t->removeStocksFromPortfolio((*reinterpret_cast< std::add_pointer_t<QList<QString>>>(_a[1]))); break;
+        case 5: _t->removeStockWhenChartClosed((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 6: _t->changeDisplayedChart(); break;
+        case 7: _t->loadRequestedStockData(); break;
+        case 8: _t->compareStocks(); break;
         default: ;
         }
     }
-    (void)_a;
 }
 
 const QMetaObject *MainWindow::metaObject() const
@@ -134,13 +171,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 9;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 9)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 4;
+        _id -= 9;
     }
     return _id;
 }

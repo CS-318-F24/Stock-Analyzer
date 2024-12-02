@@ -53,20 +53,26 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = ../../alphavantageapi.cpp \
+		../../editportfoliodialog.cpp \
 		../../filedownloader.cpp \
 		../../main.cpp \
 		../../mainwindow.cpp \
 		../../stockdata.cpp \
-		../../stockdataelement.cpp moc_alphavantageapi.cpp \
+		../../stockdataelement.cpp \
+		../../stockportfolio.cpp moc_alphavantageapi.cpp \
+		moc_editportfoliodialog.cpp \
 		moc_filedownloader.cpp \
 		moc_mainwindow.cpp
 OBJECTS       = alphavantageapi.o \
+		editportfoliodialog.o \
 		filedownloader.o \
 		main.o \
 		mainwindow.o \
 		stockdata.o \
 		stockdataelement.o \
+		stockportfolio.o \
 		moc_alphavantageapi.o \
+		moc_editportfoliodialog.o \
 		moc_filedownloader.o \
 		moc_mainwindow.o
 DIST          = /Qt/6.7.2/macos/mkspecs/features/spec_pre.prf \
@@ -269,6 +275,7 @@ DIST          = /Qt/6.7.2/macos/mkspecs/features/spec_pre.prf \
 		/Qt/6.7.2/macos/mkspecs/features/qt_config.prf \
 		/Qt/6.7.2/macos/mkspecs/macx-clang/qmake.conf \
 		/Qt/6.7.2/macos/mkspecs/features/spec_post.prf \
+		../../.qmake.stash \
 		/Qt/6.7.2/macos/mkspecs/features/exclusive_builds.prf \
 		/Qt/6.7.2/macos/mkspecs/features/mac/sdk.prf \
 		/Qt/6.7.2/macos/mkspecs/features/toolchain.prf \
@@ -299,15 +306,19 @@ DIST          = /Qt/6.7.2/macos/mkspecs/features/spec_pre.prf \
 		/Qt/6.7.2/macos/mkspecs/features/yacc.prf \
 		/Qt/6.7.2/macos/mkspecs/features/lex.prf \
 		../../../../stock-predictor.pro ../../alphavantageapi.h \
+		../../editportfoliodialog.h \
 		../../filedownloader.h \
 		../../mainwindow.h \
 		../../stockdata.h \
-		../../stockdataelement.h ../../alphavantageapi.cpp \
+		../../stockdataelement.h \
+		../../stockportfolio.h ../../alphavantageapi.cpp \
+		../../editportfoliodialog.cpp \
 		../../filedownloader.cpp \
 		../../main.cpp \
 		../../mainwindow.cpp \
 		../../stockdata.cpp \
-		../../stockdataelement.cpp
+		../../stockdataelement.cpp \
+		../../stockportfolio.cpp
 QMAKE_TARGET  = stock-predictor
 DESTDIR       = 
 TARGET        = stock-predictor.app/Contents/MacOS/stock-predictor
@@ -316,7 +327,7 @@ TARGET        = stock-predictor.app/Contents/MacOS/stock-predictor
 EXPORT_QMAKE_MAC_SDK = macosx
 EXPORT_QMAKE_MAC_SDK_VERSION = 14.5
 EXPORT_QMAKE_XCODE_DEVELOPER_PATH = /Applications/Xcode.app/Contents/Developer
-EXPORT__QMAKE_STASH_ = 
+EXPORT__QMAKE_STASH_ = /Users/mthedlund/Stock-Analyzer/build/Qt_6_7_2_for_macOS-Release/.qmake.stash
 EXPORT_VALID_ARCHS = x86_64 arm64
 EXPORT_DEFAULT_ARCHS = x86_64
 EXPORT_ARCHS = $(filter $(EXPORT_VALID_ARCHS), $(if $(ARCHS), $(ARCHS), $(if $(EXPORT_DEFAULT_ARCHS), $(EXPORT_DEFAULT_ARCHS), $(EXPORT_VALID_ARCHS))))
@@ -532,6 +543,7 @@ Makefile: ../../stock-predictor.pro ../../../Qt/6.7.2/macos/mkspecs/features/spe
 		../../../Qt/6.7.2/macos/mkspecs/features/qt_config.prf \
 		../../../Qt/6.7.2/macos/mkspecs/macx-clang/qmake.conf \
 		../../../Qt/6.7.2/macos/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt/6.7.2/macos/mkspecs/features/exclusive_builds.prf \
 		../../../Qt/6.7.2/macos/mkspecs/features/mac/sdk.prf \
 		../../../Qt/6.7.2/macos/mkspecs/features/toolchain.prf \
@@ -770,6 +782,7 @@ Makefile: ../../stock-predictor.pro ../../../Qt/6.7.2/macos/mkspecs/features/spe
 ../../../Qt/6.7.2/macos/mkspecs/features/qt_config.prf:
 ../../../Qt/6.7.2/macos/mkspecs/macx-clang/qmake.conf:
 ../../../Qt/6.7.2/macos/mkspecs/features/spec_post.prf:
+.qmake.stash:
 ../../../Qt/6.7.2/macos/mkspecs/features/exclusive_builds.prf:
 ../../../Qt/6.7.2/macos/mkspecs/features/mac/sdk.prf:
 ../../../Qt/6.7.2/macos/mkspecs/features/toolchain.prf:
@@ -831,8 +844,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents ../../alphavantageapi.h ../../filedownloader.h ../../mainwindow.h ../../stockdata.h ../../stockdataelement.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../alphavantageapi.cpp ../../filedownloader.cpp ../../main.cpp ../../mainwindow.cpp ../../stockdata.cpp ../../stockdataelement.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../alphavantageapi.h ../../editportfoliodialog.h ../../filedownloader.h ../../mainwindow.h ../../stockdata.h ../../stockdataelement.h ../../stockportfolio.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../../alphavantageapi.cpp ../../editportfoliodialog.cpp ../../filedownloader.cpp ../../main.cpp ../../mainwindow.cpp ../../stockdata.cpp ../../stockdataelement.cpp ../../stockportfolio.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -842,6 +855,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) -r stock-predictor.app
+	-$(DEL_FILE) .qmake.stash
 	-$(DEL_FILE) Makefile
 
 
@@ -860,9 +874,9 @@ benchmark: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: moc_alphavantageapi.cpp moc_filedownloader.cpp moc_mainwindow.cpp
+compiler_moc_header_make_all: moc_alphavantageapi.cpp moc_editportfoliodialog.cpp moc_filedownloader.cpp moc_mainwindow.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_alphavantageapi.cpp moc_filedownloader.cpp moc_mainwindow.cpp
+	-$(DEL_FILE) moc_alphavantageapi.cpp moc_editportfoliodialog.cpp moc_filedownloader.cpp moc_mainwindow.cpp
 moc_alphavantageapi.cpp: ../../alphavantageapi.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QObject \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qobject.h \
@@ -877,6 +891,8 @@ moc_alphavantageapi.cpp: ../../alphavantageapi.h \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/QNetworkReply \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/qnetworkreply.h \
 		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QDateTime \
@@ -887,6 +903,20 @@ moc_alphavantageapi.cpp: ../../alphavantageapi.h \
 		../../filedownloader.h \
 		../../../Qt/6.7.2/macos/libexec/moc
 	/Users/mthedlund/Qt/6.7.2/macos/libexec/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -D__cplusplus=199711L -D__APPLE_CC__=6000 -D__clang__ -D__clang_major__=15 -D__clang_minor__=0 -D__clang_patchlevel__=0 -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -I/Users/mthedlund/Qt/6.7.2/macos/mkspecs/macx-clang -I/Users/mthedlund/Stock-Analyzer -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCharts.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGLWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGL.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtGui.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtNetwork.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/Users/mthedlund/Qt/6.7.2/macos/lib ../../alphavantageapi.h -o moc_alphavantageapi.cpp
+
+moc_editportfoliodialog.cpp: ../../editportfoliodialog.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QDialog \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qdialog.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QListWidget \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qlistwidget.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QPushButton \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qboxlayout.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QObject \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qobject.h \
+		../../../Qt/6.7.2/macos/libexec/moc
+	/Users/mthedlund/Qt/6.7.2/macos/libexec/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -D__cplusplus=199711L -D__APPLE_CC__=6000 -D__clang__ -D__clang_major__=15 -D__clang_minor__=0 -D__clang_patchlevel__=0 -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -I/Users/mthedlund/Qt/6.7.2/macos/mkspecs/macx-clang -I/Users/mthedlund/Stock-Analyzer -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCharts.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGLWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGL.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtGui.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtNetwork.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/Users/mthedlund/Qt/6.7.2/macos/lib ../../editportfoliodialog.h -o moc_editportfoliodialog.cpp
 
 moc_filedownloader.cpp: ../../filedownloader.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QObject \
@@ -1041,6 +1071,8 @@ moc_mainwindow.cpp: ../../mainwindow.h \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/QNetworkReply \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/qnetworkreply.h \
 		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QDateTime \
@@ -1049,6 +1081,7 @@ moc_mainwindow.cpp: ../../mainwindow.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
 		../../stockdataelement.h \
 		../../filedownloader.h \
+		../../stockportfolio.h \
 		../../../Qt/6.7.2/macos/libexec/moc
 	/Users/mthedlund/Qt/6.7.2/macos/libexec/moc $(DEFINES) -D__APPLE__ -D__GNUC__=4 -D__APPLE_CC__ -D__cplusplus=199711L -D__APPLE_CC__=6000 -D__clang__ -D__clang_major__=15 -D__clang_minor__=0 -D__clang_patchlevel__=0 -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -I/Users/mthedlund/Qt/6.7.2/macos/mkspecs/macx-clang -I/Users/mthedlund/Stock-Analyzer -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCharts.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGLWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtWidgets.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtOpenGL.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtGui.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtNetwork.framework/Headers -I/Users/mthedlund/Qt/6.7.2/macos/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -F/Users/mthedlund/Qt/6.7.2/macos/lib ../../mainwindow.h -o moc_mainwindow.cpp
 
@@ -1214,6 +1247,8 @@ alphavantageapi.o: ../../alphavantageapi.cpp ../../../Qt/6.7.2/macos/lib/QtWidge
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/qnetworkreply.h \
 		../../alphavantageapi.h \
 		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QDateTime \
@@ -1222,6 +1257,19 @@ alphavantageapi.o: ../../alphavantageapi.cpp ../../../Qt/6.7.2/macos/lib/QtWidge
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
 		../../stockdataelement.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o alphavantageapi.o ../../alphavantageapi.cpp
+
+editportfoliodialog.o: ../../editportfoliodialog.cpp ../../editportfoliodialog.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QDialog \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qdialog.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QListWidget \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qlistwidget.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QPushButton \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qpushbutton.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QVBoxLayout \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/qboxlayout.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QObject \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qobject.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o editportfoliodialog.o ../../editportfoliodialog.cpp
 
 filedownloader.o: ../../filedownloader.cpp ../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QByteArray \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qbytearray.h \
@@ -1377,6 +1425,8 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/QNetworkReply \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/qnetworkreply.h \
 		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QDateTime \
@@ -1385,6 +1435,7 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
 		../../stockdataelement.h \
 		../../filedownloader.h \
+		../../stockportfolio.h \
 		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QApplication
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../../main.cpp
 
@@ -1525,6 +1576,7 @@ mainwindow.o: ../../mainwindow.cpp ../../../Qt/6.7.2/macos/lib/QtWidgets.framewo
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
 		../../../Qt/6.7.2/macos/lib/QtCharts.framework/Headers/QValueAxis \
 		../../../Qt/6.7.2/macos/lib/QtCharts.framework/Headers/qvalueaxis.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QGraphicsRectItem \
 		../../mainwindow.h \
 		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QMainWindow \
 		../../alphavantageapi.h \
@@ -1537,18 +1589,30 @@ mainwindow.o: ../../mainwindow.cpp ../../../Qt/6.7.2/macos/lib/QtWidgets.framewo
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/QNetworkReply \
 		../../../Qt/6.7.2/macos/lib/QtNetwork.framework/Headers/qnetworkreply.h \
 		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
 		../../stockdataelement.h \
-		../../filedownloader.h
+		../../filedownloader.h \
+		../../stockportfolio.h \
+		../../editportfoliodialog.h \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QDialog \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QListWidget \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QPushButton \
+		../../../Qt/6.7.2/macos/lib/QtWidgets.framework/Headers/QVBoxLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../../mainwindow.cpp
 
-stockdata.o: ../../stockdata.cpp ../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QJsonObject \
+stockdata.o: ../../stockdata.cpp ../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QtMath \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmath.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QJsonObject \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QJsonArray \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonarray.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QString \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qstring.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
 		../../stockdata.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
@@ -1564,8 +1628,26 @@ stockdataelement.o: ../../stockdataelement.cpp ../../stockdataelement.h \
 		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qdatetime.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o stockdataelement.o ../../stockdataelement.cpp
 
+stockportfolio.o: ../../stockportfolio.cpp ../../stockportfolio.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QMap \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qmap.h \
+		../../stockdata.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QVector \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qvector.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QDateTime \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qdatetime.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QJsonObject \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qjsonobject.h \
+		../../stockdataelement.h \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/QString \
+		../../../Qt/6.7.2/macos/lib/QtCore.framework/Headers/qstring.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o stockportfolio.o ../../stockportfolio.cpp
+
 moc_alphavantageapi.o: moc_alphavantageapi.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_alphavantageapi.o moc_alphavantageapi.cpp
+
+moc_editportfoliodialog.o: moc_editportfoliodialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_editportfoliodialog.o moc_editportfoliodialog.cpp
 
 moc_filedownloader.o: moc_filedownloader.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_filedownloader.o moc_filedownloader.cpp

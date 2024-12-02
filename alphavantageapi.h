@@ -19,23 +19,35 @@ class AlphaVantageAPI : public QObject
 
     QString time_series_type;
 
-    QString curr_ticker;
     FileDownloader *json_ctrl;
 
+    bool json_saving;
+    QString save_loc;
+
+    QMap<QString, StockData*> stock_data_store;
+
 public:
-    AlphaVantageAPI(QString _time_series_type="TIME_SERIES_DAILY");
+    AlphaVantageAPI(QString _time_series_type="TIME_SERIES_DAILY", bool json_saving=true);
     ~AlphaVantageAPI();
 
     void requestStockData(QString ticker);
 
-    QMap<QString, StockData*> stock_data_store;
+    void setSaving(bool _json_saving);
+    void setSaveLocation(QString _save_location);
+
+    StockData *getStockData(QString ticker);
+
+    QString type();
+
+    int numStoredStocks();
+    QVector<QString> stockList();
 
 signals:
-    void savedRequestedStockData();
+    void savedRequestedStockData(QString ticker);
 
 public slots:
     void addTimeSeries();
-    void saveJSON();
+    void saveJSON(QString ticker);
 
 };
 

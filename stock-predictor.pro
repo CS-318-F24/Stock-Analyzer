@@ -12,18 +12,22 @@ CONFIG += c++17
 
 SOURCES += \
     alphavantageapi.cpp \
+    editportfoliodialog.cpp \
     filedownloader.cpp \
     main.cpp \
     mainwindow.cpp \
     stockdata.cpp \
-    stockdataelement.cpp
+    stockdataelement.cpp \
+    stockportfolio.cpp
 
 HEADERS += \
     alphavantageapi.h \
+    editportfoliodialog.h \
     filedownloader.h \
     mainwindow.h \
     stockdata.h \
-    stockdataelement.h
+    stockdataelement.h \
+    stockportfolio.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

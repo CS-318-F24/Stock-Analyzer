@@ -5,32 +5,36 @@
 #include <QtWidgets>
 #include <alphavantageapi.h>
 
+#include "stockportfolio.h"
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
     AlphaVantageAPI *AV_api;
 
-    /*
-    QMenu *fileMenu;
-    QAction openFile;
-    QAction saveFile;
-    */
+    StockPortfolio curr_portfolio;
 
+    //layout for app window
     QWidget *app;
-    QVBoxLayout *main_layout; //layout for this window
-    QHBoxLayout *control_layout;
-
     QLabel *app_title;
-    QLabel *search_label;
     QLabel *compareStats;
-    QTabWidget *tabs;
-    QPushButton *compare;
 
+    QVBoxLayout *main_layout;
 
-    // QWidget *control_panel;
+    QHBoxLayout *dashboard_layout;
+
+    QVBoxLayout *control_layout;
+    QLabel *search_label;
     QLineEdit *stock_picker;
-    QString curr_ticker;
+    QLabel *portfolio_label;
+    QTableWidget *portfolio_table;
+
+    QPushButton *edit_portfolio_button;
+    QPushButton *compare_button;
+
+
+    QTabWidget *chart_viewer;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -38,15 +42,21 @@ public:
 
 public slots:
     void fetchData(); //for stock data requests from line edit input
+    void saveFileNamePrompt();
 
-    void renderRequestedStockData();
+    void renderRequestedStockData(QString ticker);
+    void addRequestedStockData(QString ticker);
+
+    void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
+
+    void removeStockWhenChartClosed(int index);
+
+    void changeDisplayedChart(); //displays the chart specified by selected stocks in portfolio viewer
+
+
+    //old, may deprecate
     void loadRequestedStockData();
     void compareStocks();
-
-    /*
-     * saveData();
-     *
-     */
 
 };
 #endif // MAINWINDOW_H
