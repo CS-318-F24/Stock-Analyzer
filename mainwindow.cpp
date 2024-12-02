@@ -170,15 +170,21 @@ void MainWindow::compareStocks() {
     for (int i = 0; i < tabCount; ++i) {
         tabNames << tabs->tabText(i);
     }
+    bool ok;
 
-    QString firstTabName = QInputDialog::getItem(this, "Select First Tab", "Choose the first tab to compare:", tabNames, 0, false);
-    if (firstTabName.isEmpty()) {
+    QString firstTabName = QInputDialog::getItem(this, "Select First Tab", "Choose the first tab to compare:", tabNames, 0, false, &ok);
+    if (firstTabName.isEmpty() || !ok) {
+        QMessageBox::warning(this, "Canceled", "Canceled");
         return;
     }
 
-    QString secondTabName = QInputDialog::getItem(this, "Select Second Tab", "Choose the second tab to compare:", tabNames, 1, false);
+    QString secondTabName = QInputDialog::getItem(this, "Select Second Tab", "Choose the second tab to compare:", tabNames, 1, false, &ok);
     if (secondTabName.isEmpty() || firstTabName == secondTabName) {
         QMessageBox::warning(this, "Invalid Selection", "You must select two different tabs to compare.");
+        return;
+    }
+    if(!ok){
+        QMessageBox::warning(this, "Canceled", "Canceled");
         return;
     }
 
