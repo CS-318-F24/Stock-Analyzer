@@ -8,7 +8,7 @@
 
 #include "stockdataelement.h"
 
-StockData::StockData(QJsonObject _data) : time_series(), moving_avg_series()
+StockData::StockData(QJsonObject _data) : time_series(), close_price_list(), returns(), moving_avg_series()
 {
     QJsonObject meta_data = _data["Meta Data"].toObject();
     ticker = meta_data["2. Symbol"].toString();
@@ -38,9 +38,16 @@ StockData::StockData(QJsonObject _data) : time_series(), moving_avg_series()
         StockDataElement el(candle_date, open, high, low, close, volume);
 
         time_series.insert(candle_date, el);
+        close_price_list.append(close);
     }
 
     qDebug() << "stock data made for " << ticker << ".";
+
+    //make percent returns list and calculate mean (expected) percent return
+    this->makeReturns();
+    this->makeLogReturns();
+    this->calculateExpectedReturn();
+    this->calculateRisk();
 }
 
 StockData::StockData() {}
@@ -48,7 +55,60 @@ StockData::StockData() {}
 StockData::~StockData() {}
 
 
-//public methods
+//helper for creating returns list
+void StockData::makeReturns() {
+    returns.resize(close_price_list.size() - 1);
+    for(int i = 1; i < close_price_list.size(); ++i) {
+        returns[i - 1] = ((close_price_list[i] - close_price_list[i - 1]) / close_price_list[i]) * 100;
+    }
+}
+
+//helper for creating log-returns
+void StockData::makeLogReturns() {
+    log_returns.resize(close_price_list.size() - 1);
+    for(int i = 1; i < close_price_list.size(); ++i) {
+        log_returns[i - 1] = qLn(close_price_list[i]) - qLn(close_price_list[i - 1]);
+    }
+}
+
+//helper for caculating expected returns
+void StockData::calculateExpectedReturn(QString type) {
+    float cumlative_returns = 0;
+    if(type == "log") {
+        for(int i = 0; i < log_returns.size(); ++i) {
+            cumlative_returns += log_returns[i];
+        }
+    } else if(type == "simple") {
+        for(int i = 0; i < returns.size(); ++i) {
+            cumlative_returns += returns[i];
+        }
+    }
+
+    expected_return = cumlative_returns / returns.size(); //expected returns are simple average
+}
+
+//helper for calculating risk
+void StockData::calculateRisk() {
+    if (returns.isEmpty()) {
+        //avoid division by zero
+        risk = 0.0f;
+    }
+
+    float sum_of_squares = 0.0f;
+
+    for (float value : returns) {
+        float deviation = value - expected_return;
+        sum_of_squares += deviation * deviation;
+    }
+
+    // Standard deviation formula: sqrt((Σ(xi - mean)^2) / N)
+    float variance = sum_of_squares / returns.size();
+    risk = qSqrt(variance);
+}
+
+
+//==============================public methods==============================//
+
 QString StockData::getTicker() {
     return ticker;
 }
@@ -57,80 +117,21 @@ QMap<QDateTime, StockDataElement> StockData::getTimeSeries() {
     return time_series;
 }
 
-
-//static helpers for calculating correlation between two stock data
-QVector<QPair<float, float>> StockData::longestCommonSubsequence(StockData stock1, StockData stock2) {
-    qDebug() << "longestCommonSubsequence(" << stock1.getTicker() << "," << stock2.getTicker() << ")";
-    QMap<QDateTime, StockDataElement> stock1_time_series = stock1.getTimeSeries();
-    QMap<QDateTime, StockDataElement> stock2_time_series = stock2.getTimeSeries();
-    qDebug() << "got time series for " << stock1.getTicker() << " and " << stock2.getTicker();
-
-    // get common time series of close prices from stock 1 and 2
-    QVector<QPair<float, float>> common_time_series;
-    if(stock1_time_series.size() < stock2_time_series.size()){
-        qDebug() << stock1.getTicker() << " is longer than " << stock2.getTicker();
-        for(QMap<QDateTime, StockDataElement>::const_iterator it = stock1_time_series.cbegin(); it != stock1_time_series.cend(); ++it) {
-            if(stock1_time_series.contains(it.key()) && stock2_time_series.contains(it.key())) {
-                qDebug() << "\t both time series have data for " << it.key();
-                QPair<float, float> close_prices(it.value().getClose(), stock2_time_series[it.key()].getClose());
-                common_time_series.append(close_prices);
-            }
-        }
-    } else {
-        qDebug() << stock2.getTicker() << " is longer than " << stock1.getTicker();
-        for(QMap<QDateTime, StockDataElement>::const_iterator it = stock2_time_series.cbegin(); it != stock2_time_series.cend(); ++it) {
-            if(stock2_time_series.contains(it.key()) && stock1_time_series.contains(it.key())) {
-                qDebug() << "\t both time series have data for " << it.key();
-                QPair<float, float> close_prices(it.value().getClose(), stock1_time_series[it.key()].getClose());
-                common_time_series.append(close_prices);
-            }
-        }
-    }
-
+QVector<float> StockData::getSimpleReturns() {
+    return returns;
 }
 
+float StockData::getExpectedReturn() {
+    return expected_return;
+}
 
-//helper for calculating log-returns series
-QVector<QPair<float, float>> StockData::getLogReturns(QVector<QPair<float, float>> close_prices) {
-    QVector<QPair<float, float>> log_returns;
-    for (int i = 1; i < close_prices.size(); ++i) {
-        QPair<float, float> returns(qLn(close_prices[i].first) - qLn(close_prices[i - 1].first), qLn(close_prices[i].second) - qLn(close_prices[i - 1].second));
-        log_returns.append(returns);
-    }
+QVector<float> StockData::getLogReturns() {
     return log_returns;
 }
 
-
-float StockData::getCorrealationCoefficient(StockData stock1, StockData stock2) {
-    QVector<QPair<float, float>> common_time_series = StockData::longestCommonSubsequence(stock1, stock2);
-    qDebug() << "got longest common time series between " << stock1.getTicker() << "and " << stock2.getTicker();
-
-    QVector<QPair<float, float>> log_returns = StockData::getLogReturns(common_time_series);
-    qDebug() << "got log returns.";
-
-    float mean1 = 0.0;
-    float mean_of_squares1 = 0.0;
-    float mean2 = 0.0;
-    float mean_of_squares2 = 0.0;
-    float prod_mean = 0.0;
-    for(int i = 0; i < log_returns.size(); ++i) {
-        mean1 += log_returns[i].first;
-        mean_of_squares1 += qPow(log_returns[i].first, 2);
-        mean2 += log_returns[i].second;
-        mean_of_squares2 += qPow(log_returns[i].second, 2);
-        prod_mean += (log_returns[i].first * log_returns[i].second);
-    }
-    mean1 = mean1 / log_returns.size();
-    mean_of_squares1 = mean_of_squares1 / log_returns.size();
-    mean2 = mean2 / log_returns.size();
-    mean_of_squares2 = mean_of_squares2 / log_returns.size();
-    prod_mean = prod_mean / log_returns.size();
-
-    float coefficient = (prod_mean) - (mean1 * mean2) / qSqrt((mean_of_squares1 - qPow(mean1, 2)) * (mean_of_squares2 - qPow(mean2, 2)));
-
-    return 0.0;
+float StockData::getRisk() {
+    return risk;
 }
-
 
 
 QMap<QDateTime, float> StockData::getMovingAvgSeries(QString type) {

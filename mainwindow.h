@@ -5,17 +5,15 @@
 #include <QtWidgets>
 #include <alphavantageapi.h>
 
+#include "stockportfolio.h"
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
     AlphaVantageAPI *AV_api;
 
-    /*
-    QMenu *fileMenu;
-    QAction openFile;
-    QAction saveFile;
-    */
+    StockPortfolio curr_portfolio;
 
     //layout for app window
     QWidget *app;
@@ -28,9 +26,11 @@ class MainWindow : public QMainWindow
     QLabel *search_label;
     QLineEdit *stock_picker;
     QLabel *portfolio_label;
-    QTableWidget *portfolio_viewer;
+    QTableWidget *portfolio_table;
 
-    QTabWidget *tabs;
+    QPushButton *edit_portfolio_button;
+
+    QTabWidget *chart_viewer;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -42,12 +42,16 @@ public slots:
 
     void renderRequestedStockData(QString ticker);
     void addRequestedStockData(QString ticker);
-    void loadRequestedStockData();
 
-    /*
-     * saveData();
-     *
-     */
+    void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
+
+    void removeStockWhenChartClosed(int index);
+
+    void changeDisplayedChart(); //displays the chart specified by selected stocks in portfolio viewer
+
+
+    //old, may deprecate
+    void loadRequestedStockData();
 
 };
 #endif // MAINWINDOW_H
