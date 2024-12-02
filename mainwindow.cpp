@@ -46,8 +46,9 @@ MainWindow::MainWindow(QWidget *parent)
     //main dashboard layout
     dashboard_layout = new QHBoxLayout();
 
-    //control panel layout
+    //control and chartpanel layout
     control_layout = new QVBoxLayout();
+    chart_layout = new QVBoxLayout();
 
     search_label = new QLabel("#### Enter Stock Ticker Symbol:");
     search_label->setTextFormat(Qt::MarkdownText);
@@ -99,16 +100,18 @@ MainWindow::MainWindow(QWidget *parent)
     chart_viewer->setTabsClosable(true);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, chart_viewer, &QTabWidget::removeTab);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, this, &MainWindow::removeStockWhenChartClosed);
+    chart_layout->addWidget(chart_viewer);
+
+    // Initialize and add GBM_viewer
+    GBM_viewer = new QTabWidget();
+    GBM_viewer->setTabsClosable(true);
+    connect(GBM_viewer, &QTabWidget::tabCloseRequested, GBM_viewer, &QTabWidget::removeTab);
+    chart_layout->addWidget(GBM_viewer);
 
     connect(portfolio_table, &QTableWidget::itemSelectionChanged, this, &MainWindow::changeDisplayedChart);
 
-    dashboard_layout->addWidget(chart_viewer);
+    dashboard_layout->addLayout(chart_layout);
     main_layout->addLayout(dashboard_layout);
-
-    // Add 'Simulate GBM' button
-    QPushButton *simulateGBMButton = new QPushButton("Simulate GBM");
-    connect(simulateGBMButton, &QPushButton::clicked, this, &MainWindow::simulateGBM);
-    control_layout->addWidget(simulateGBMButton);
 
 }
 
@@ -184,6 +187,7 @@ void MainWindow::addRequestedStockData(QString ticker) {
     portfolio_table->setItem(r, 2, risk_item);
 
     this->renderRequestedStockData(ticker);
+    this->simulateGBM(ticker);
 }
 
 //helper extension for addRequested to make charts
@@ -259,6 +263,13 @@ void MainWindow::changeDisplayedChart() {
             chart_viewer->setCurrentIndex(i);
         }
     }
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(selected_stock)) {
+            GBM_viewer->setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 
@@ -276,6 +287,7 @@ void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
         for(int r = 0; r < chart_viewer->count(); ++r) {
             if(set_to_delete.contains(chart_viewer->tabText(r))) {
                 chart_viewer->removeTab(r);
+                GBM_viewer->removeTab(r);
             }
         }
     }
@@ -298,6 +310,13 @@ void MainWindow::removeStockWhenChartClosed(int index) {
     curr_portfolio.remove(ticker);
 
     portfolio_table->removeRow(index); //see if this works without specifying stock name
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(ticker)) {
+            GBM_viewer->removeTab(i);
+            break;
+        }
+    }
 }
 
 
@@ -388,8 +407,7 @@ void MainWindow::loadRequestedStockData() {
 
 }
 
-void MainWindow::simulateGBM() {
-    QString ticker = stock_picker->text();
+void MainWindow::simulateGBM(QString ticker) {
     float T = 1.0;  // years
     int steps = 252;
 
@@ -437,7 +455,8 @@ void MainWindow::simulateGBM() {
     QWidget *tabWidget = new QWidget();
     QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
     tabLayout->addWidget(chartView);
-    tabs->addTab(tabWidget, "GBM Predictions");
-    tabs->setCurrentWidget(tabWidget);
+
+    GBM_viewer->addTab(tabWidget, ticker + "_GBM");
+    GBM_viewer->setCurrentWidget(tabWidget);
 }
 

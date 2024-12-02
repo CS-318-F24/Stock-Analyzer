@@ -23,6 +23,7 @@ class MainWindow : public QMainWindow
     QHBoxLayout *dashboard_layout;
 
     QVBoxLayout *control_layout;
+    QVBoxLayout *chart_layout;
     QLabel *search_label;
     QLineEdit *stock_picker;
     QLabel *portfolio_label;
@@ -31,6 +32,7 @@ class MainWindow : public QMainWindow
     QPushButton *edit_portfolio_button;
 
     QTabWidget *chart_viewer;
+    QTabWidget *GBM_viewer;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -54,7 +56,7 @@ public slots:
     //old, may deprecate
     void loadRequestedStockData();
     
-    void simulateGBM();
+    void simulateGBM(QString ticker);
 
 
 
