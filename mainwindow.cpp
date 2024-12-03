@@ -112,6 +112,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(chart_viewer, &QTabWidget::tabCloseRequested, this, &MainWindow::removeStockWhenChartClosed);
     chart_layout->addWidget(chart_viewer);
 
+    //Initialize and add compare_viewer
+    compare_viewer = new QTabWidget();
+    compare_viewer->setTabsClosable(true);
+    connect(compare_viewer, &QTabWidget::tabCloseRequested, compare_viewer, &QTabWidget::removeTab);
+    chart_layout->addWidget(compare_viewer);
+
+
     // Initialize and add GBM_viewer
     GBM_viewer = new QTabWidget();
     GBM_viewer->setTabsClosable(true);
@@ -448,6 +455,7 @@ void MainWindow::compareStocks() {
         return;
     }
 
+
     int firstTabIndex = tabNames.indexOf(firstTabName);
     int secondTabIndex = tabNames.indexOf(secondTabName);
 
@@ -524,17 +532,21 @@ void MainWindow::compareStocks() {
         series->attachAxis(axisX);
         series->attachAxis(axisY);
     }
+
+    //create chart view
     QChartView *combinedChartView = new QChartView(combinedChart);
     combinedChartView->setRenderHint(QPainter::Antialiasing);
     //combinedChartView->setFixedSize(400, 600); //change this later
 
     QWidget *comparisonTab = new QWidget();
-    QHBoxLayout *layout = new QHBoxLayout(comparisonTab);
+    QHBoxLayout *tabLayout = new QHBoxLayout(comparisonTab);
+    tabLayout->addWidget(combinedChartView);
 
-    layout->addWidget(combinedChartView);
+    compare_viewer->addTab(comparisonTab, QString("Comparison: %1 vs %2").arg(firstTabName, secondTabName));
+    compare_viewer->setCurrentWidget(comparisonTab);
+
     /*
  * Also include covariant and correlation. Through portfolio class.
- * Can't close comparison.
  * Comparison of Comparison Does not work. Don't allow
  * Can we have graph view take up 2/3 of screen instead of half
  *                               "%1:\n"
@@ -569,9 +581,7 @@ void MainWindow::compareStocks() {
                               //.arg(minDateSecond.toString("yyyy-MM-dd"))
                               //.arg(maxDateSecond.toString("yyyy-MM-dd")));
 
-    layout->addWidget(compareStats);
-    chart_viewer->addTab(comparisonTab, QString("Comparison: %1 vs %2").arg(firstTabName, secondTabName));
-    chart_viewer->setCurrentWidget(comparisonTab);
+    tabLayout->addWidget(compareStats);
 }
 
 void MainWindow::simulateGBM(QString ticker) {

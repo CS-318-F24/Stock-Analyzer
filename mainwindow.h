@@ -36,6 +36,7 @@ class MainWindow : public QMainWindow
 
 
     QTabWidget *chart_viewer;
+    QTabWidget *compare_viewer;
     QTabWidget *GBM_viewer;
 
 public:
