@@ -18,6 +18,8 @@ class MainWindow : public QMainWindow
     //layout for app window
     QWidget *app;
     QLabel *app_title;
+    QLabel *compareStats;
+
     QVBoxLayout *main_layout;
 
     QHBoxLayout *dashboard_layout;
@@ -30,8 +32,11 @@ class MainWindow : public QMainWindow
     QTableWidget *portfolio_table;
 
     QPushButton *edit_portfolio_button;
+    QPushButton *compare_button;
+
 
     QTabWidget *chart_viewer;
+    QTabWidget *compare_viewer;
     QTabWidget *GBM_viewer;
 
 public:
@@ -55,9 +60,9 @@ public slots:
 
     //old, may deprecate
     void loadRequestedStockData();
+    void compareStocks();
     
     void simulateGBM(QString ticker);
-
 
 
 };
