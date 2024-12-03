@@ -3,6 +3,9 @@
 StockPortfolio::StockPortfolio() {
 
     portfolio = QMap<QString, StockData*>();
+    allocation = QMap<QString, float>();
+    investment_used = 0;
+    available_funds = 0;
 }
 
 StockPortfolio::~StockPortfolio() {}
@@ -143,4 +146,23 @@ void StockPortfolio::remove(QString ticker) {
 
 QList<QString> StockPortfolio::getStocks() {
     return portfolio.keys();
+}
+
+void StockPortfolio::allocateInvestment(QString ticker, float allocation_amount) {
+    allocation.insert(ticker, allocation_amount);
+    investment_used += allocation_amount;
+    qDebug() << "Total investment used:" << investment_used;
+    qDebug() << "Investment by stock:" << allocation;
+}
+
+float StockPortfolio::getInvestmentUsed() {
+    return investment_used;
+}
+
+void StockPortfolio::setAvailableFunds(int funds) {
+    available_funds = funds;
+}
+
+int StockPortfolio::getAvailableFunds() {
+    return available_funds;
 }

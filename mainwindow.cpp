@@ -62,6 +62,38 @@ MainWindow::MainWindow(QWidget *parent)
     connect(stock_picker, &QLineEdit::returnPressed, this, &MainWindow::fetchData);
     control_layout->addWidget(stock_picker);
 
+    fund_stats = new QHBoxLayout();
+
+    available_funds_text = new QLineEdit();
+    available_funds_text->setText("Funds:");
+    fund_stats->addWidget(available_funds_text);
+
+    available_funds = new QLineEdit();
+    available_funds->setPlaceholderText("0");
+    QIntValidator *intValidator = new QIntValidator();
+    available_funds->setValidator(intValidator);
+    fund_stats->addWidget(available_funds);
+
+    update_available_funds = new QPushButton("Update");
+    connect(update_available_funds, &QPushButton::clicked, this, &MainWindow::updateAvailableFunds);
+    fund_stats->addWidget(update_available_funds);
+    fund_stats->addStretch();
+
+    control_layout->addLayout(fund_stats);
+
+    allocation_stats = new QHBoxLayout();
+
+    percent_allocated_text = new QLineEdit();
+    percent_allocated_text->setText("Amount allocated:");
+    allocation_stats->addWidget(percent_allocated_text);
+
+    percent_allocated = new QLineEdit();
+    percent_allocated->setPlaceholderText("0.0");
+    allocation_stats->addWidget(percent_allocated);
+    allocation_stats->addStretch();
+
+    control_layout->addLayout(allocation_stats);
+
     portfolio_label = new QLabel("## Portfolio:");
     portfolio_label->setTextFormat(Qt::MarkdownText);
     control_layout->addWidget(portfolio_label);
@@ -70,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     portfolio_table = new QTableWidget();
     portfolio_table->setMinimumSize(300, 200);
     portfolio_table->setMaximumSize(400, 300);
-    portfolio_table->setColumnCount(3);
+    portfolio_table->setColumnCount(5);
     portfolio_table->setStyleSheet("QTableWidget { background-color: #444444; }");
     QTableWidgetItem *name = new QTableWidgetItem("Stock Name");
     portfolio_table->setHorizontalHeaderItem(0, name);
@@ -78,6 +110,10 @@ MainWindow::MainWindow(QWidget *parent)
     portfolio_table->setHorizontalHeaderItem(1, returns);
     QTableWidgetItem *risk = new QTableWidgetItem("Risk");
     portfolio_table->setHorizontalHeaderItem(2, risk);
+    QTableWidgetItem *allocation = new QTableWidgetItem("Allocation");
+    portfolio_table->setHorizontalHeaderItem(3, allocation);
+    QTableWidgetItem *amountInStock = new QTableWidgetItem("Amount($)");
+    portfolio_table->setHorizontalHeaderItem(4, amountInStock);
     control_layout->addWidget(portfolio_table);
 
     //add edit button
@@ -175,6 +211,32 @@ void MainWindow::addRequestedStockData(QString ticker) {
     StockData *stock = AV_api->getStockData(ticker);
     curr_portfolio.insert(stock);
 
+    float userInput = 0.0;
+    // Checks that total allocation < 100%
+
+    while (true) {
+        bool ok;
+        userInput = QInputDialog::getDouble(this, "Allocation Amount",QString("What proportion (0-1) of your funds would you like to allocate to %1").arg(ticker),0,0,1,2,&ok,Qt::WindowFlags(),0.01);
+
+        // user presses cancel
+        if (!ok) {
+            QMessageBox::warning(this, "Input required", "Please enter a value");
+            continue;
+        }
+
+        if (userInput + curr_portfolio.getInvestmentUsed() <= 1) {
+            break;
+        }
+        else {
+            float investment_remaining = 1 - curr_portfolio.getInvestmentUsed();
+            QMessageBox::warning(this, "Invalid input", QString("Cannot allocate more than 100% of funds. You have %1 remaining.").arg(investment_remaining));
+        }
+    }
+
+    curr_portfolio.allocateInvestment(ticker, userInput);
+
+    percent_allocated->setText(QString::number(curr_portfolio.getInvestmentUsed()));
+
     int r = portfolio_table->rowCount();
     portfolio_table->insertRow(r);
     qDebug() << r;
@@ -202,6 +264,14 @@ void MainWindow::addRequestedStockData(QString ticker) {
     risk_item->setData(Qt::DisplayRole, risk);
     risk_item->setFlags(risk_item->flags() & ~Qt::ItemIsEditable);
     portfolio_table->setItem(r, 2, risk_item);
+
+    QTableWidgetItem *allocation_item = new QTableWidgetItem();
+    allocation_item->setData(Qt::DisplayRole, userInput);
+    portfolio_table->setItem(r, 3, allocation_item);
+
+    QTableWidgetItem *fund_item = new QTableWidgetItem();
+    fund_item->setData(Qt::DisplayRole, curr_portfolio.getAvailableFunds() * userInput);
+    portfolio_table->setItem(r, 4, fund_item);
 
     this->renderRequestedStockData(ticker);
     this->simulateGBM(ticker);
@@ -425,6 +495,21 @@ void MainWindow::loadRequestedStockData() {
 
 }
 
+void MainWindow::updateAvailableFunds(int new_amount) {
+    curr_portfolio.setAvailableFunds(available_funds->text().toInt());
+
+    int funds_available = curr_portfolio.getAvailableFunds();
+
+    available_funds->setText(QString("%1").arg(funds_available));
+
+    for (int row = 0; row < portfolio_table->rowCount(); ++row) {
+        QTableWidgetItem *item = new QTableWidgetItem();
+        double allocated_percent = portfolio_table->item(row,3)->text().toDouble();
+        item->setData(Qt::DisplayRole, allocated_percent * funds_available);
+        portfolio_table->setItem(row,4,item);
+    }
+}
+
 void MainWindow::compareStocks() {
     int tabCount = chart_viewer->count();
 
@@ -636,5 +721,3 @@ void MainWindow::simulateGBM(QString ticker) {
     GBM_viewer->addTab(tabWidget, ticker + "_GBM");
     GBM_viewer->setCurrentWidget(tabWidget);
 }
-
-
