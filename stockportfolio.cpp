@@ -5,6 +5,7 @@ StockPortfolio::StockPortfolio() {
     portfolio = QMap<QString, StockData*>();
     allocation = QMap<QString, float>();
     investment_used = 0;
+    available_funds = 0;
 }
 
 StockPortfolio::~StockPortfolio() {}

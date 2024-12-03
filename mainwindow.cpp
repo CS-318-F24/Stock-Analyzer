@@ -243,6 +243,10 @@ void MainWindow::addRequestedStockData(QString ticker) {
     allocation_item->setData(Qt::DisplayRole, userInput);
     portfolio_table->setItem(r, 3, allocation_item);
 
+    QTableWidgetItem *fund_item = new QTableWidgetItem();
+    fund_item->setData(Qt::DisplayRole, curr_portfolio.getAvailableFunds() * userInput);
+    portfolio_table->setItem(r, 4, fund_item);
+
     this->renderRequestedStockData(ticker);
 }
 
