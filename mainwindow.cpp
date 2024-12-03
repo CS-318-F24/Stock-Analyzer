@@ -49,8 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     //main dashboard layout
     dashboard_layout = new QHBoxLayout();
 
-    //control panel layout
+    //control and chartpanel layout
     control_layout = new QVBoxLayout();
+    chart_layout = new QVBoxLayout();
 
     search_label = new QLabel("#### Enter Stock Ticker Symbol:");
     search_label->setTextFormat(Qt::MarkdownText);
@@ -109,11 +110,19 @@ MainWindow::MainWindow(QWidget *parent)
     chart_viewer->setTabsClosable(true);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, chart_viewer, &QTabWidget::removeTab);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, this, &MainWindow::removeStockWhenChartClosed);
+    chart_layout->addWidget(chart_viewer);
+
+    // Initialize and add GBM_viewer
+    GBM_viewer = new QTabWidget();
+    GBM_viewer->setTabsClosable(true);
+    connect(GBM_viewer, &QTabWidget::tabCloseRequested, GBM_viewer, &QTabWidget::removeTab);
+    chart_layout->addWidget(GBM_viewer);
 
     connect(portfolio_table, &QTableWidget::itemSelectionChanged, this, &MainWindow::changeDisplayedChart);
 
-    dashboard_layout->addWidget(chart_viewer);
+    dashboard_layout->addLayout(chart_layout);
     main_layout->addLayout(dashboard_layout);
+
 }
 
 MainWindow::~MainWindow() {}
@@ -188,6 +197,7 @@ void MainWindow::addRequestedStockData(QString ticker) {
     portfolio_table->setItem(r, 2, risk_item);
 
     this->renderRequestedStockData(ticker);
+    this->simulateGBM(ticker);
 }
 
 //helper extension for addRequested to make charts
@@ -263,6 +273,13 @@ void MainWindow::changeDisplayedChart() {
             chart_viewer->setCurrentIndex(i);
         }
     }
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(selected_stock)) {
+            GBM_viewer->setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 
@@ -280,6 +297,7 @@ void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
         for(int r = 0; r < chart_viewer->count(); ++r) {
             if(set_to_delete.contains(chart_viewer->tabText(r))) {
                 chart_viewer->removeTab(r);
+                GBM_viewer->removeTab(r);
             }
         }
     }
@@ -302,6 +320,13 @@ void MainWindow::removeStockWhenChartClosed(int index) {
     curr_portfolio.remove(ticker);
 
     portfolio_table->removeRow(index); //see if this works without specifying stock name
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(ticker)) {
+            GBM_viewer->removeTab(i);
+            break;
+        }
+    }
 }
 
 
@@ -499,24 +524,20 @@ void MainWindow::compareStocks() {
         series->attachAxis(axisX);
         series->attachAxis(axisY);
     }
-
     QChartView *combinedChartView = new QChartView(combinedChart);
     combinedChartView->setRenderHint(QPainter::Antialiasing);
-    combinedChartView->setFixedSize(400, 600); //change this later
+    //combinedChartView->setFixedSize(400, 600); //change this later
 
     QWidget *comparisonTab = new QWidget();
-    QVBoxLayout *layout = new QVBoxLayout(comparisonTab);
+    QHBoxLayout *layout = new QHBoxLayout(comparisonTab);
 
     layout->addWidget(combinedChartView);
-/*
+    /*
  * Also include covariant and correlation. Through portfolio class.
- * Move where graph is displayed to being under single graph.
- * Find spot for comparison data
- * Fix sizing of graphs to fit screen.
- *
-    compareStats = new QLabel();
-    compareStats->setText(QString(
-                              "%1:\n"
+ * Can't close comparison.
+ * Comparison of Comparison Does not work. Don't allow
+ * Can we have graph view take up 2/3 of screen instead of half
+ *                               "%1:\n"
                               "High: %2\n"
                               "Low: %3\n"
                               "Date Range: %4 to %5\n\n"
@@ -524,19 +545,86 @@ void MainWindow::compareStocks() {
                               "High: %7\n"
                               "Low: %8\n"
                               "Date Range: %9 to %10")
+ */
+    compareStats = new QLabel();
+    compareStats->setText(QString(
+                              "%1:\n"
+                              "High: %2\n"
+                              "Low: %3\n\n"
+                              "%4:\n"
+                              "High: %5\n"
+                              "Low: %6\n"
+                              "\nTotal\n"
+                              "Covariance: \n"
+                              "Correlation: \n"
+                              )
                               .arg(firstTabName)
                               .arg(maxYFirst)
                               .arg(minYFirst)
-                              .arg(minDateFirst.toString("yyyy-MM-dd"))
-                              .arg(maxDateFirst.toString("yyyy-MM-dd"))
+                              //.arg(minDateFirst.toString("yyyy-MM-dd"))
+                              //.arg(maxDateFirst.toString("yyyy-MM-dd"))
                               .arg(secondTabName)
                               .arg(maxYSecond)
-                              .arg(minYSecond)
-                              .arg(minDateSecond.toString("yyyy-MM-dd"))
-                              .arg(maxDateSecond.toString("yyyy-MM-dd")));
+                              .arg(minYSecond));
+                              //.arg(minDateSecond.toString("yyyy-MM-dd"))
+                              //.arg(maxDateSecond.toString("yyyy-MM-dd")));
 
     layout->addWidget(compareStats);
-*/
     chart_viewer->addTab(comparisonTab, QString("Comparison: %1 vs %2").arg(firstTabName, secondTabName));
     chart_viewer->setCurrentWidget(comparisonTab);
 }
+
+void MainWindow::simulateGBM(QString ticker) {
+    float T = 1.0;  // years
+    int steps = 252;
+
+    QChart *chart = new QChart();
+    chart->setTitle("Simulated GBM Paths");
+    chart->legend()->hide();
+
+    // Generate multiple paths (5)
+    for (int i = 0; i < 5; ++i) {
+        QVector<QPointF> gbmPath = AV_api->simulateGBM(ticker, T, steps);
+        if (gbmPath.isEmpty()) {
+            qDebug() << "GBM simulation failed for ticker:" << ticker;
+            continue;
+        }
+
+        // Create a series for each path
+        QLineSeries *series = new QLineSeries();
+        for (const auto &point : gbmPath) {
+            series->append(point);
+        }
+        chart->addSeries(series);
+    }
+
+    // Create axes
+    QValueAxis *axisX = new QValueAxis;
+    axisX->setTitleText("Time (Years)");
+    axisX->setLabelFormat("%.2f");
+    chart->addAxis(axisX, Qt::AlignBottom);
+
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setTitleText("Price");
+    axisY->setLabelFormat("%.2f");
+    chart->addAxis(axisY, Qt::AlignLeft);
+
+    for (QAbstractSeries *series : chart->series()) {
+        series->attachAxis(axisX);
+        series->attachAxis(axisY);
+    }
+
+    // Create a chart view
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    // Add the chart view to a new tab
+    QWidget *tabWidget = new QWidget();
+    QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
+    tabLayout->addWidget(chartView);
+
+    GBM_viewer->addTab(tabWidget, ticker + "_GBM");
+    GBM_viewer->setCurrentWidget(tabWidget);
+}
+
+

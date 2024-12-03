@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QIODevice>
 #include <QUrl>
+#include <QtMath>
+#include <QRandomGenerator>
 
 #include "filedownloader.h"
 #include "alphavantageapi.h"
@@ -29,7 +31,7 @@ void AlphaVantageAPI::requestStockData(QString ticker) {
 
     json_ctrl = new FileDownloader();
     connect(json_ctrl, &FileDownloader::downloaded, this, &AlphaVantageAPI::addTimeSeries);
-    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=KLETJFYEAXS68JWP").arg(time_series_type).arg(ticker);
+    QString url_format = QString("https://www.alphavantage.co/query?function=%1&symbol=%2&outputsize=full&apikey=ARA99ALNZ2NWS5AC").arg(time_series_type).arg(ticker);
     QUrl json_url(url_format);
     json_ctrl->makeCall(json_url);
 }
@@ -105,4 +107,92 @@ int AlphaVantageAPI::numStoredStocks() {
 
 QVector<QString> AlphaVantageAPI::stockList() {
     return stock_data_store.keys();
+}
+
+// https://quant.stackexchange.com/questions/42082/calculate-drift-of-brownian-motion-using-euler-method
+float AlphaVantageAPI::calculateAverageReturn(QMap<QDateTime, StockDataElement> timeSeries) {
+    float sumReturns = 0.0;  // Sum of all log returns
+    int count = 0;           // Number of valid data points
+
+    QDateTime previousDate;
+    for (auto it = timeSeries.begin(); it != timeSeries.end(); ++it) {
+
+        if (!previousDate.isNull()) {
+            float currentPrice = it.value().getClose();
+            float previousPrice = timeSeries[previousDate].getClose();
+            sumReturns += qLn(currentPrice / previousPrice); // ln(P_t / P_(t-1))
+            ++count;
+        }
+        previousDate = it.key();
+    }
+
+    if(count > 0) {
+        return sumReturns;
+    } else {
+        return 0.0;
+    }
+}
+
+
+float AlphaVantageAPI::calculateVolatility(QMap<QDateTime, StockDataElement> timeSeries) {
+    QVector<float> logReturns;
+    QDateTime previousDate;
+
+    for (auto it = timeSeries.begin(); it != timeSeries.end(); ++it) {
+
+        if (!previousDate.isNull()) {
+            float currentPrice = it.value().getClose();
+            float previousPrice = timeSeries[previousDate].getClose();
+            logReturns.append(qLn(currentPrice / previousPrice));
+        }
+        previousDate = it.key();
+    }
+
+    // Calculate the mean of log returns
+    // https://www.geeksforgeeks.org/accumulate-and-partial_sum-in-c-stl-numeric-header/
+    float meanReturn = std::accumulate(logReturns.begin(), logReturns.end(), 0.0) / logReturns.size();
+
+    // Calculate the variance
+    float variance = 0.0;
+    for (float ret : logReturns) {
+        variance += qPow(ret - meanReturn, 2); // Sum of squared deviations
+    }
+    variance /= logReturns.size();
+
+    return qSqrt(variance); // Standard deviation = volatility
+}
+
+
+QVector<QPointF> AlphaVantageAPI::simulateGBM(QString ticker, float T, int steps) {
+    if (!stock_data_store.contains(ticker)) {
+        qDebug() << "Stock data not found for ticker:" << ticker;
+        return QVector<QPointF>();
+    }
+
+    StockData *stock = stock_data_store[ticker];
+    QMap<QDateTime, StockDataElement> timeSeries = stock->getTimeSeries();
+
+    if (timeSeries.isEmpty()) {
+        qDebug() << "Time series data is empty for ticker:" << ticker;
+        return QVector<QPointF>();
+    }
+
+    QVector<QPointF> gbmPath;
+    float S0 = timeSeries.last().getClose();
+    float mu = calculateAverageReturn(timeSeries); // drift
+    float sigma = calculateVolatility(timeSeries); // volatility
+    float dt = T / steps; // Time step
+    float S = S0;
+
+    for (int i = 0; i <= steps; ++i) {
+        // Generate a random number
+        float Z = QRandomGenerator::global()->generateDouble() * 2 - 1;
+        Z *= 5;
+
+        // Update stock price using the simplified GBM formula and append to path
+        S = S * qExp((mu - 0.5 * sigma * sigma) * dt + sigma * qSqrt(dt) * Z);
+        gbmPath.append(QPointF(i * dt, S));
+    }
+
+    return gbmPath;
 }
