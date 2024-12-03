@@ -32,6 +32,15 @@ class MainWindow : public QMainWindow
 
     QTabWidget *chart_viewer;
 
+    QHBoxLayout *fund_stats;
+    QLineEdit *available_funds_text;
+    QLineEdit *available_funds;
+    QPushButton *update_available_funds;
+
+    QHBoxLayout *allocation_stats;
+    QLineEdit *percent_allocated_text;
+    QLineEdit *percent_allocated;
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -52,6 +61,8 @@ public slots:
 
     //old, may deprecate
     void loadRequestedStockData();
+
+    void updateAvailableFunds(int new_amount);
 
 };
 #endif // MAINWINDOW_H
