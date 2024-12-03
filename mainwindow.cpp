@@ -106,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     //tabs for displaying stock close price time series
     chart_viewer = new QTabWidget();
-    chart_viewer->setMinimumSize(600, 400);
+    chart_viewer->setMinimumSize(500, 350);
     chart_viewer->setTabsClosable(true);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, chart_viewer, &QTabWidget::removeTab);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, this, &MainWindow::removeStockWhenChartClosed);
@@ -114,13 +114,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     //Initialize and add compare_viewer
     compare_viewer = new QTabWidget();
+    compare_viewer->setMinimumSize(500, 350);
     compare_viewer->setTabsClosable(true);
     connect(compare_viewer, &QTabWidget::tabCloseRequested, compare_viewer, &QTabWidget::removeTab);
     chart_layout->addWidget(compare_viewer);
 
-
     // Initialize and add GBM_viewer
     GBM_viewer = new QTabWidget();
+    GBM_viewer->setMinimumSize(500, 350);
     GBM_viewer->setTabsClosable(true);
     connect(GBM_viewer, &QTabWidget::tabCloseRequested, GBM_viewer, &QTabWidget::removeTab);
     chart_layout->addWidget(GBM_viewer);
@@ -337,94 +338,7 @@ void MainWindow::removeStockWhenChartClosed(int index) {
 }
 
 
-//===================== *in dev, work in progress * ====================//
-/*
-void MainWindow::simulateGBM() {
-    QString ticker = stock_picker->text();
-    float T = 1.0;  // years
-    int steps = 252;
-
-    QChart *chart = new QChart();
-    chart->setTitle("Simulated GBM Paths");
-    chart->legend()->hide();
-
-    // Generate multiple paths (5)
-    for (int i = 0; i < 5; ++i) {
-        QVector<QPointF> gbmPath = AV_api->simulateGBM(ticker, T, steps);
-        if (gbmPath.isEmpty()) {
-            qDebug() << "GBM simulation failed for ticker:" << ticker;
-            continue;
-        }
-
-        // Create a series for each path
-        QLineSeries *series = new QLineSeries();
-        for (const auto &point : gbmPath) {
-            series->append(point);
-        }
-        chart->addSeries(series);
-    }
-
-    // Create axes
-    QValueAxis *axisX = new QValueAxis;
-    axisX->setTitleText("Time (Years)");
-    axisX->setLabelFormat("%.2f");
-    chart->addAxis(axisX, Qt::AlignBottom);
-
-    QValueAxis *axisY = new QValueAxis;
-    axisY->setTitleText("Price");
-    axisY->setLabelFormat("%.2f");
-    chart->addAxis(axisY, Qt::AlignLeft);
-
-    for (QAbstractSeries *series : chart->series()) {
-        series->attachAxis(axisX);
-        series->attachAxis(axisY);
-    }
-
-    // Create a chart view
-    QChartView *chartView = new QChartView(chart);
-    chartView->setRenderHint(QPainter::Antialiasing);
-
-    // Add the chart view to a new tab
-    QWidget *tabWidget = new QWidget();
-    QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
-    tabLayout->addWidget(chartView);
-    tabs->addTab(tabWidget, "GBM Predictions");
-    tabs->setCurrentWidget(tabWidget);
-}
-*/
-
-
-
-
-//old, may deprecate
-void MainWindow::loadRequestedStockData() {
-
-    QFile stock_data_file = QFile("/Users/mthedlund/0318Project/stock_data/%1.json");
-
-    if (!stock_data_file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Error opening file for writing!";
-        return;
-    }
-
-    QByteArray raw_data = stock_data_file.readAll();
-    QJsonDocument json_doc = QJsonDocument::fromJson(raw_data);
-    if (json_doc.isNull()) {
-        qDebug() << "Error parsing JSON";
-        return;
-    }
-
-    QJsonObject json_obj;
-    if(json_doc.isObject()) {
-        json_obj = json_doc.object();
-        qDebug() << "JSON Object";
-    }
-
-    //what to do here???
-
-    stock_data_file.close();
-
-}
-
+//render stock comparison
 void MainWindow::compareStocks() {
     int tabCount = chart_viewer->count();
 
@@ -584,6 +498,7 @@ void MainWindow::compareStocks() {
     tabLayout->addWidget(compareStats);
 }
 
+//render GBM projections
 void MainWindow::simulateGBM(QString ticker) {
     float T = 1.0;  // years
     int steps = 252;
@@ -635,6 +550,37 @@ void MainWindow::simulateGBM(QString ticker) {
 
     GBM_viewer->addTab(tabWidget, ticker + "_GBM");
     GBM_viewer->setCurrentWidget(tabWidget);
+}
+
+
+
+
+//old, may deprecate
+void MainWindow::loadRequestedStockData() {
+
+    QFile stock_data_file = QFile("/Users/mthedlund/0318Project/stock_data/%1.json");
+
+    if (!stock_data_file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Error opening file for writing!";
+        return;
+    }
+
+    QByteArray raw_data = stock_data_file.readAll();
+    QJsonDocument json_doc = QJsonDocument::fromJson(raw_data);
+    if (json_doc.isNull()) {
+        qDebug() << "Error parsing JSON";
+        return;
+    }
+
+    QJsonObject json_obj;
+    if(json_doc.isObject()) {
+        json_obj = json_doc.object();
+        qDebug() << "JSON Object";
+    }
+
+    //what to do here???
+
+    stock_data_file.close();
 }
 
 
