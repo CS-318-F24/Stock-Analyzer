@@ -11,6 +11,9 @@
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QDateTimeAxis>
+#include <QtCharts/QValueAxis>
+#include <QGraphicsRectItem>
+
 
 
 #include "mainwindow.h"
@@ -46,8 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     //main dashboard layout
     dashboard_layout = new QHBoxLayout();
 
-    //control panel layout
+    //control and chartpanel layout
     control_layout = new QVBoxLayout();
+    chart_layout = new QVBoxLayout();
 
     search_label = new QLabel("#### Enter Stock Ticker Symbol:");
     search_label->setTextFormat(Qt::MarkdownText);
@@ -94,6 +98,7 @@ MainWindow::MainWindow(QWidget *parent)
     portfolio_label->setTextFormat(Qt::MarkdownText);
     control_layout->addWidget(portfolio_label);
 
+
     portfolio_table = new QTableWidget();
     portfolio_table->setMinimumSize(300, 200);
     portfolio_table->setMaximumSize(400, 300);
@@ -125,6 +130,12 @@ MainWindow::MainWindow(QWidget *parent)
         }
     });
 
+    //add compare button
+    compare_button = new QPushButton("compare");
+    QObject::connect(compare_button, &QPushButton::clicked,this, &MainWindow::compareStocks);
+
+    control_layout->addWidget(compare_button);
+
     control_layout->addWidget(edit_portfolio_button);
 
     dashboard_layout->addLayout(control_layout);
@@ -135,11 +146,26 @@ MainWindow::MainWindow(QWidget *parent)
     chart_viewer->setTabsClosable(true);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, chart_viewer, &QTabWidget::removeTab);
     connect(chart_viewer, &QTabWidget::tabCloseRequested, this, &MainWindow::removeStockWhenChartClosed);
+    chart_layout->addWidget(chart_viewer);
+
+    //Initialize and add compare_viewer
+    compare_viewer = new QTabWidget();
+    compare_viewer->setTabsClosable(true);
+    connect(compare_viewer, &QTabWidget::tabCloseRequested, compare_viewer, &QTabWidget::removeTab);
+    chart_layout->addWidget(compare_viewer);
+
+
+    // Initialize and add GBM_viewer
+    GBM_viewer = new QTabWidget();
+    GBM_viewer->setTabsClosable(true);
+    connect(GBM_viewer, &QTabWidget::tabCloseRequested, GBM_viewer, &QTabWidget::removeTab);
+    chart_layout->addWidget(GBM_viewer);
 
     connect(portfolio_table, &QTableWidget::itemSelectionChanged, this, &MainWindow::changeDisplayedChart);
 
-    dashboard_layout->addWidget(chart_viewer);
+    dashboard_layout->addLayout(chart_layout);
     main_layout->addLayout(dashboard_layout);
+
 }
 
 MainWindow::~MainWindow() {}
@@ -248,6 +274,7 @@ void MainWindow::addRequestedStockData(QString ticker) {
     portfolio_table->setItem(r, 4, fund_item);
 
     this->renderRequestedStockData(ticker);
+    this->simulateGBM(ticker);
 }
 
 //helper extension for addRequested to make charts
@@ -323,6 +350,13 @@ void MainWindow::changeDisplayedChart() {
             chart_viewer->setCurrentIndex(i);
         }
     }
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(selected_stock)) {
+            GBM_viewer->setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 
@@ -340,6 +374,7 @@ void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
         for(int r = 0; r < chart_viewer->count(); ++r) {
             if(set_to_delete.contains(chart_viewer->tabText(r))) {
                 chart_viewer->removeTab(r);
+                GBM_viewer->removeTab(r);
             }
         }
     }
@@ -362,6 +397,13 @@ void MainWindow::removeStockWhenChartClosed(int index) {
     curr_portfolio.remove(ticker);
 
     portfolio_table->removeRow(index); //see if this works without specifying stock name
+
+    for (int i = 0; i < GBM_viewer->count(); ++i) {
+        if (GBM_viewer->tabText(i).startsWith(ticker)) {
+            GBM_viewer->removeTab(i);
+            break;
+        }
+    }
 }
 
 
@@ -427,7 +469,8 @@ void MainWindow::simulateGBM() {
 //old, may deprecate
 void MainWindow::loadRequestedStockData() {
 
-    QFile stock_data_file = QFile("/Users/ottoq/Documents/Middlebury/Computer_Science/CS318/stock_data/%1.json");
+    QFile stock_data_file = QFile("/Users/mthedlund/0318Project/stock_data/%1.json");
+
     if (!stock_data_file.open(QIODevice::ReadOnly)) {
         qDebug() << "Error opening file for writing!";
         return;
@@ -467,3 +510,214 @@ void MainWindow::updateAvailableFunds(int new_amount) {
     }
 }
 
+void MainWindow::compareStocks() {
+    int tabCount = chart_viewer->count();
+
+    if (tabCount < 2) {
+        QMessageBox::warning(this, "More Tabs Needed", "You need at least two tabs to compare.");
+        return;
+    }
+
+    QStringList tabNames;
+    for (int i = 0; i < tabCount; ++i) {
+        tabNames << chart_viewer->tabText(i);
+    }
+    bool ok;
+
+    QString firstTabName = QInputDialog::getItem(this, "Select First Tab", "Choose the first tab to compare:", tabNames, 0, false, &ok);
+    if (firstTabName.isEmpty() || !ok) {
+        QMessageBox::warning(this, "Canceled", "Canceled");
+        return;
+    }
+
+    QString secondTabName = QInputDialog::getItem(this, "Select Second Tab", "Choose the second tab to compare:", tabNames, 1, false, &ok);
+    if (secondTabName.isEmpty() || firstTabName == secondTabName) {
+        QMessageBox::warning(this, "Invalid Selection", "You must select two different tabs to compare.");
+        return;
+    }
+    if(!ok){
+        QMessageBox::warning(this, "Canceled", "Canceled");
+        return;
+    }
+
+
+    int firstTabIndex = tabNames.indexOf(firstTabName);
+    int secondTabIndex = tabNames.indexOf(secondTabName);
+
+    QWidget *firstTab = chart_viewer->widget(firstTabIndex);
+    QWidget *secondTab = chart_viewer->widget(secondTabIndex);
+
+    QChartView *firstChartView = firstTab->findChild<QChartView *>();
+    QChartView *secondChartView = secondTab->findChild<QChartView *>();
+
+    if (!firstChartView || !secondChartView) {
+        QMessageBox::warning(this, "Error", "Unable to retrieve charts from the selected tabs.");
+        return;
+    }
+
+    QLineSeries *firstSeries = static_cast<QLineSeries *>(firstChartView->chart()->series().first());
+    QLineSeries *secondSeries = static_cast<QLineSeries *>(secondChartView->chart()->series().first());
+
+    QDateTime minDateFirst = QDateTime::currentDateTime();
+    QDateTime maxDateFirst = QDateTime::fromSecsSinceEpoch(0);
+    qreal minYFirst = std::numeric_limits<qreal>::max();
+    qreal maxYFirst = std::numeric_limits<qreal>::lowest();
+
+    QDateTime minDateSecond = QDateTime::currentDateTime();
+    QDateTime maxDateSecond = QDateTime::fromSecsSinceEpoch(0);
+    qreal minYSecond = std::numeric_limits<qreal>::max();
+    qreal maxYSecond = std::numeric_limits<qreal>::lowest();
+
+    for (const QPointF &point : firstSeries->points()) {
+        QDateTime date = QDateTime::fromMSecsSinceEpoch(point.x());
+        qreal y = point.y();
+
+        if (date < minDateFirst) minDateFirst = date;
+        if (date > maxDateFirst) maxDateFirst = date;
+        if (y < minYFirst) minYFirst = y;
+        if (y > maxYFirst) maxYFirst = y;
+    }
+
+    for (const QPointF &point : secondSeries->points()) {
+        QDateTime date = QDateTime::fromMSecsSinceEpoch(point.x());
+        qreal y = point.y();
+
+        if (date < minDateSecond) minDateSecond = date;
+        if (date > maxDateSecond) maxDateSecond = date;
+        if (y < minYSecond) minYSecond = y;
+        if (y > maxYSecond) maxYSecond = y;
+    }
+
+    QChart *combinedChart = new QChart();
+    combinedChart->setTitle(QString("Comparison of %1 and %2").arg(firstTabName, secondTabName));
+
+    QLineSeries *firstSeriesCopy = new QLineSeries();
+    firstSeriesCopy->setName(firstTabName);
+    firstSeriesCopy->replace(firstSeries->points());
+    combinedChart->addSeries(firstSeriesCopy);
+
+    QLineSeries *secondSeriesCopy = new QLineSeries();
+    secondSeriesCopy->setName(secondTabName);
+    secondSeriesCopy->replace(secondSeries->points());
+    combinedChart->addSeries(secondSeriesCopy);
+
+    QDateTimeAxis *axisX = new QDateTimeAxis();
+    axisX->setFormat("yyyy-MM-dd");
+    axisX->setTitleText("Date");
+    axisX->setRange(minDateFirst < minDateSecond ? minDateFirst : minDateSecond,
+                    maxDateFirst > maxDateSecond ? maxDateFirst : maxDateSecond);
+    combinedChart->addAxis(axisX, Qt::AlignBottom);
+
+    QValueAxis *axisY = new QValueAxis();
+    axisY->setTitleText("Price");
+    axisY->setRange(std::min(minYFirst, minYSecond), std::max(maxYFirst, maxYSecond));
+    combinedChart->addAxis(axisY, Qt::AlignLeft);
+
+    for (QAbstractSeries *series : combinedChart->series()) {
+        series->attachAxis(axisX);
+        series->attachAxis(axisY);
+    }
+
+    //create chart view
+    QChartView *combinedChartView = new QChartView(combinedChart);
+    combinedChartView->setRenderHint(QPainter::Antialiasing);
+    //combinedChartView->setFixedSize(400, 600); //change this later
+
+    QWidget *comparisonTab = new QWidget();
+    QHBoxLayout *tabLayout = new QHBoxLayout(comparisonTab);
+    tabLayout->addWidget(combinedChartView);
+
+    compare_viewer->addTab(comparisonTab, QString("Comparison: %1 vs %2").arg(firstTabName, secondTabName));
+    compare_viewer->setCurrentWidget(comparisonTab);
+
+    /*
+ * Also include covariant and correlation. Through portfolio class.
+ * Comparison of Comparison Does not work. Don't allow
+ * Can we have graph view take up 2/3 of screen instead of half
+ *                               "%1:\n"
+                              "High: %2\n"
+                              "Low: %3\n"
+                              "Date Range: %4 to %5\n\n"
+                              "%6:\n"
+                              "High: %7\n"
+                              "Low: %8\n"
+                              "Date Range: %9 to %10")
+ */
+    compareStats = new QLabel();
+    compareStats->setText(QString(
+                              "%1:\n"
+                              "High: %2\n"
+                              "Low: %3\n\n"
+                              "%4:\n"
+                              "High: %5\n"
+                              "Low: %6\n"
+                              "\nTotal\n"
+                              "Covariance: \n"
+                              "Correlation: \n"
+                              )
+                              .arg(firstTabName)
+                              .arg(maxYFirst)
+                              .arg(minYFirst)
+                              //.arg(minDateFirst.toString("yyyy-MM-dd"))
+                              //.arg(maxDateFirst.toString("yyyy-MM-dd"))
+                              .arg(secondTabName)
+                              .arg(maxYSecond)
+                              .arg(minYSecond));
+                              //.arg(minDateSecond.toString("yyyy-MM-dd"))
+                              //.arg(maxDateSecond.toString("yyyy-MM-dd")));
+
+    tabLayout->addWidget(compareStats);
+}
+
+void MainWindow::simulateGBM(QString ticker) {
+    float T = 1.0;  // years
+    int steps = 252;
+
+    QChart *chart = new QChart();
+    chart->setTitle("Simulated GBM Paths");
+    chart->legend()->hide();
+
+    // Generate multiple paths (5)
+    for (int i = 0; i < 5; ++i) {
+        QVector<QPointF> gbmPath = AV_api->simulateGBM(ticker, T, steps);
+        if (gbmPath.isEmpty()) {
+            qDebug() << "GBM simulation failed for ticker:" << ticker;
+            continue;
+        }
+
+        // Create a series for each path
+        QLineSeries *series = new QLineSeries();
+        for (const auto &point : gbmPath) {
+            series->append(point);
+        }
+        chart->addSeries(series);
+    }
+
+    // Create axes
+    QValueAxis *axisX = new QValueAxis;
+    axisX->setTitleText("Time (Years)");
+    axisX->setLabelFormat("%.2f");
+    chart->addAxis(axisX, Qt::AlignBottom);
+
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setTitleText("Price");
+    axisY->setLabelFormat("%.2f");
+    chart->addAxis(axisY, Qt::AlignLeft);
+
+    for (QAbstractSeries *series : chart->series()) {
+        series->attachAxis(axisX);
+        series->attachAxis(axisY);
+    }
+
+    // Create a chart view
+    QChartView *chartView = new QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    // Add the chart view to a new tab
+    QWidget *tabWidget = new QWidget();
+    QVBoxLayout *tabLayout = new QVBoxLayout(tabWidget);
+    tabLayout->addWidget(chartView);
+
+    GBM_viewer->addTab(tabWidget, ticker + "_GBM");
+    GBM_viewer->setCurrentWidget(tabWidget);
+}

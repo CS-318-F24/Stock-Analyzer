@@ -18,19 +18,26 @@ class MainWindow : public QMainWindow
     //layout for app window
     QWidget *app;
     QLabel *app_title;
+    QLabel *compareStats;
+
     QVBoxLayout *main_layout;
 
     QHBoxLayout *dashboard_layout;
 
     QVBoxLayout *control_layout;
+    QVBoxLayout *chart_layout;
     QLabel *search_label;
     QLineEdit *stock_picker;
     QLabel *portfolio_label;
     QTableWidget *portfolio_table;
 
     QPushButton *edit_portfolio_button;
+    QPushButton *compare_button;
+
 
     QTabWidget *chart_viewer;
+    QTabWidget *compare_viewer;
+    QTabWidget *GBM_viewer;
 
     QHBoxLayout *fund_stats;
     QLineEdit *available_funds_text;
@@ -52,6 +59,7 @@ public slots:
     void renderRequestedStockData(QString ticker);
     void addRequestedStockData(QString ticker);
 
+
     void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
 
     void removeStockWhenChartClosed(int index);
@@ -61,6 +69,10 @@ public slots:
 
     //old, may deprecate
     void loadRequestedStockData();
+    void compareStocks();
+    
+    void simulateGBM(QString ticker);
+
 
     void updateAvailableFunds(int new_amount);
 
