@@ -3,6 +3,9 @@
 StockPortfolio::StockPortfolio() {
 
     portfolio = QMap<QString, StockData*>();
+    allocation = QMap<QString, float>();
+    investment_used = 0;
+    available_funds = 0;
 }
 
 StockPortfolio::~StockPortfolio() {}
@@ -38,11 +41,14 @@ QPair<QVector<float>, QVector<float>> StockPortfolio::commonTimeSeries(StockData
         return QPair<QVector<float>, QVector<float>>();
     }
 
-
     QMap<QDateTime, StockDataElement> ts_stock1 = stock1->getTimeSeries();
     QMap<QDateTime, StockDataElement> ts_stock2 = stock2->getTimeSeries();
     int counter = 0;
     for(QMap<QDateTime, StockDataElement>::const_iterator it = ts_reference.cbegin(); it != ts_reference.cend(); ++it) {
+        if(it == ts_reference.cbegin() || counter >= ts_reference.size()) {
+            continue;
+            ++counter;
+        }
         if(ts_stock1.contains(it.key()) && ts_stock2.contains(it.key())) {
             qDebug() << "  both stocks have data for" << it.key();
             common_data_stock1.append(data_reference_stock1[counter]);
@@ -141,6 +147,29 @@ void StockPortfolio::remove(QString ticker) {
     qDebug() << "1 if removed" << ticker << ":" << removed;
 }
 
-QList<QString> StockPortfolio::getStocks() {
+StockData *StockPortfolio::getStock(QString ticker) {
+    return portfolio[ticker];
+}
+
+QList<QString> StockPortfolio::getStockList() {
     return portfolio.keys();
+}
+
+void StockPortfolio::allocateInvestment(QString ticker, float allocation_amount) {
+    allocation.insert(ticker, allocation_amount);
+    investment_used += allocation_amount;
+    qDebug() << "Total investment used:" << investment_used;
+    qDebug() << "Investment by stock:" << allocation;
+}
+
+float StockPortfolio::getInvestmentUsed() {
+    return investment_used;
+}
+
+void StockPortfolio::setAvailableFunds(int funds) {
+    available_funds = funds;
+}
+
+int StockPortfolio::getAvailableFunds() {
+    return available_funds;
 }

@@ -34,10 +34,18 @@ class MainWindow : public QMainWindow
     QPushButton *edit_portfolio_button;
     QPushButton *compare_button;
 
-
     QTabWidget *chart_viewer;
     QTabWidget *compare_viewer;
     QTabWidget *GBM_viewer;
+
+    QHBoxLayout *fund_stats;
+    QLabel *available_funds_text;
+    QLineEdit *available_funds;
+    QPushButton *update_available_funds;
+
+    QHBoxLayout *allocation_stats;
+    QLabel *percent_allocated_text;
+    QLineEdit *percent_allocated;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -57,13 +65,15 @@ public slots:
 
     void changeDisplayedChart(); //displays the chart specified by selected stocks in portfolio viewer
 
+    void compareStocks();
+
+    void simulateGBM(QString ticker);
+
+    void updateAvailableFunds(int new_amount);
+
 
     //old, may deprecate
     void loadRequestedStockData();
-    void compareStocks();
-    
-    void simulateGBM(QString ticker);
-
 
 };
 #endif // MAINWINDOW_H
