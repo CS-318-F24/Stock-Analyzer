@@ -29,6 +29,12 @@ class StockData
     void calculateExpectedReturn(QString type="log");
     void calculateRisk();
 
+    //private helpers
+    static QPair<QVector<float>, QVector<float>> commonTimeSeries(StockData stock1, StockData stock2, QString type="log");
+
+    static float getMean(QVector<float> list);
+    static float getStandardDeviation(QVector<float> list);
+
 public:
     StockData(QJsonObject _data);
     StockData();
@@ -42,12 +48,15 @@ public:
     float getExpectedReturn();
     float getRisk();
 
+    static float covariant(StockData stock1, StockData stock2);
+    static float correlation(StockData stock1, StockData stock2);
+
+    friend QDataStream &operator<<(QDataStream &out, const StockData &stock_data);
+    friend QDataStream &operator>>(QDataStream &in, StockData &stock_data);
+
 
     //old, may deprecate
     static QVector<QPair<float, float>> longestCommonSubsequence(StockData stock1, StockData stock2);
-
-    static float getCorrealationCoefficient(StockData stock1, StockData stock2);
-
 };
 
 #endif // STOCKDATA_H

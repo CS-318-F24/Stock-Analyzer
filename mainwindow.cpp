@@ -26,7 +26,7 @@
 QT_USE_NAMESPACE
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), curr_portfolio()
+    : QMainWindow(parent)
 {
     QRect screenGeometry = QGuiApplication::primaryScreen()->availableGeometry();
     int screenWidth = screenGeometry.width();
@@ -41,8 +41,20 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("Portfolio Maker");
 
     //api for handling stock data
-    AV_api = new AlphaVantageAPI("TIME_SERIES_DAILY");
-    connect(AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::addRequestedStockData);
+    call_limit = 25;
+    connect(&AV_api, &AlphaVantageAPI::savedRequestedStockData, this, &MainWindow::addRequestedStockData);
+
+    //file menu
+    file_menu = new QMenu("&File");
+    save = new QAction("&save portfolio");
+    save->setShortcut(Qt::CTRL | Qt::Key_S);
+    file_menu->addAction(save);
+    connect(save, &QAction::triggered, this, &MainWindow::savePortfolio);
+    open = new QAction("&open portfolio");
+    open->setShortcut(Qt::CTRL | Qt::Key_O);
+    file_menu->addAction(open);
+    connect(open, &QAction::triggered, this, &MainWindow::loadPortfolio);
+    menuBar()->addMenu(file_menu);
 
     //main window layout
     app = new QWidget(this);
@@ -51,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     //app window title
     app_title = new QLabel("# Portfolio Maker");
-    app_title->setMaximumHeight(30);
+    app_title->setMaximumHeight(35);
     app_title->setTextFormat(Qt::MarkdownText);
     app_title->setAlignment(Qt::AlignLeft);
     main_layout->addWidget(app_title);
@@ -63,26 +75,27 @@ MainWindow::MainWindow(QWidget *parent)
     control_layout = new QVBoxLayout();
 
     search_label = new QLabel("#### Enter Stock Ticker Symbol:");
-    search_label->setMaximumHeight(30);
+    search_label->setMaximumHeight(25);
     search_label->setMaximumWidth(500);
     search_label->setTextFormat(Qt::MarkdownText);
     control_layout->addWidget(search_label);
 
     stock_picker = new QLineEdit();
-    stock_picker->setMaximumHeight(30);
+    stock_picker->setMaximumHeight(25);
     stock_picker->setMaximumWidth(500);
     stock_picker->setPlaceholderText("ex: AAPL");
     connect(stock_picker, &QLineEdit::returnPressed, this, &MainWindow::fetchData);
     control_layout->addWidget(stock_picker);
 
+    //============= allocation interface ===============//
     fund_stats = new QHBoxLayout();
 
     available_funds_text = new QLabel("Funds:");
-    available_funds_text->setMaximumHeight(30);
+    available_funds_text->setMaximumHeight(20);
     fund_stats->addWidget(available_funds_text);
 
     available_funds = new QLineEdit();
-    available_funds->setMaximumHeight(30);
+    available_funds->setMaximumHeight(20);
     available_funds->setPlaceholderText("0.0");
     QIntValidator *intValidator = new QIntValidator();
     available_funds->setValidator(intValidator);
@@ -99,11 +112,11 @@ MainWindow::MainWindow(QWidget *parent)
     allocation_stats = new QHBoxLayout();
 
     percent_allocated_text = new QLabel("Amount allocated:");
-    percent_allocated_text->setMaximumHeight(30);
+    percent_allocated_text->setMaximumHeight(20);
     allocation_stats->addWidget(percent_allocated_text);
 
     percent_allocated = new QLineEdit();
-    percent_allocated->setMaximumHeight(30);
+    percent_allocated->setMaximumHeight(20);
     percent_allocated->setPlaceholderText("0.0");
     allocation_stats->addWidget(percent_allocated);
     allocation_stats->addStretch();
@@ -111,12 +124,12 @@ MainWindow::MainWindow(QWidget *parent)
     control_layout->addLayout(allocation_stats);
 
     portfolio_label = new QLabel("## Portfolio:");
-    portfolio_label->setMaximumHeight(30);
+    portfolio_label->setMaximumHeight(25);
     portfolio_label->setMaximumWidth(500);
     portfolio_label->setTextFormat(Qt::MarkdownText);
     control_layout->addWidget(portfolio_label);
 
-
+    //========== portfolio table ===========//
     portfolio_table = new QTableWidget();
     portfolio_table->resize(300, 200);
     portfolio_table->setMaximumSize(500, 300);
@@ -134,7 +147,7 @@ MainWindow::MainWindow(QWidget *parent)
     portfolio_table->setHorizontalHeaderItem(4, amountInStock);
     control_layout->addWidget(portfolio_table);
 
-    //add edit button
+    //============= edit portfolio button & dialog ==============//
     edit_portfolio_button = new QPushButton("edit");
     edit_portfolio_button->setMaximumWidth(500);
     QObject::connect(edit_portfolio_button, &QPushButton::clicked, [&]() {
@@ -145,10 +158,11 @@ MainWindow::MainWindow(QWidget *parent)
 
         if (dialog.exec() == QDialog::Accepted) {
             QStringList remainingStocks = dialog.getSelectedStocks();
-            qDebug() << "Remaining stocks:" << remainingStocks;
+            //qDebug() << "Remaining stocks:" << remainingStocks;
         }
     });
     control_layout->addWidget(edit_portfolio_button);
+    //===========================================================//
 
 
     //add compare button
@@ -157,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(compare_button, &QPushButton::clicked,this, &MainWindow::compareStocks);
     control_layout->addWidget(compare_button);
 
-    dashboard_layout->addLayout(control_layout);
+    dashboard_layout->addLayout(control_layout, 1);
 
 
     //========= chart layout =========//
@@ -178,6 +192,7 @@ MainWindow::MainWindow(QWidget *parent)
     compare_viewer->resize(450, 400);
     compare_viewer->setTabsClosable(true);
     connect(compare_viewer, &QTabWidget::tabCloseRequested, compare_viewer, &QTabWidget::removeTab);
+    compare_viewer->setVisible(false);
     chart_layout->addWidget(compare_viewer);
 
     // Initialize and add GBM_viewer
@@ -192,60 +207,124 @@ MainWindow::MainWindow(QWidget *parent)
     chart_scroll_area->setWidget(chart_scroll_content);
     chart_scroll_area->show();
 
-    dashboard_layout->addWidget(chart_scroll_area);
+    dashboard_layout->addWidget(chart_scroll_area, 3);
     main_layout->addLayout(dashboard_layout);
 
 }
 
-MainWindow::~MainWindow() {}
-
-//get filename for saving helper
-void MainWindow::saveFileNamePrompt() {
-    AV_api->setSaving(true);
-    QString fileName = QFileDialog::getSaveFileName(nullptr);
-    if (!(fileName.isEmpty())) {
-        qDebug() << fileName;
-        AV_api->setSaveLocation(fileName);
-        return;
-    } else {
-        return;
-    }
+MainWindow::~MainWindow() {
+    QSettings settings("ottoq", "portfolioMaker");
+    settings.setValue("last_dir", last_dir);
 }
+
 
 //================================ public slots ============================//
-
-//slot for initiating api call
-void MainWindow::fetchData() {
-    //dialog prompt for saving or not saving
-    QDialog dialog;
-    QDialogButtonBox *saveDialog = new QDialogButtonBox(QDialogButtonBox::Yes | QDialogButtonBox::No, &dialog);
-
-    connect(saveDialog, &QDialogButtonBox::accepted, this, &MainWindow::saveFileNamePrompt);
-    connect(saveDialog, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(saveDialog, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-    int click_val = dialog.exec();
-
-    if(click_val == 0) {
-        AV_api->setSaving(false);
+//helper for getting filename for saving
+QString MainWindow::saveFileNamePrompt() {
+    QString fileName = QFileDialog::getSaveFileName(nullptr, "Select save location", last_dir);
+    if (!(fileName.isEmpty())) {
+        qDebug() << fileName;
+        return fileName;
+    } else {
+        return "";
     }
 
-    AV_api->requestStockData(stock_picker->text());
+    last_dir = QFileInfo(fileName).absolutePath();
+}
+
+//========== save current portfolio ===========//
+void MainWindow::savePortfolio() {
+    if(curr_portfolio.getStockList().size() == 0) {
+        QMessageBox::warning(this, "Cannot save empty portfolio", "Create portfolio before saving");
+        return;
+    }
+
+    QString saveFileName = saveFileNamePrompt();
+    if (saveFileName == "") {
+        return;
+    }
+
+    //initialize file to save scribble data too
+    QFile saveFile(saveFileName);
+
+    //open file for reading, and check for success
+    if (!saveFile.open(QIODevice::WriteOnly)) {
+        return;
+    }
+
+    //create data stream to write file bytes
+    QDataStream bytesOut(&saveFile);
+    bytesOut << curr_portfolio;
 }
 
 
+//helpers for gettting filename for opening
+QString MainWindow::openFileNamePrompt() {
+    QString fileName = QFileDialog::getOpenFileName(nullptr, "Select file", last_dir);
+    if (!(fileName.isEmpty())) {
+        return fileName;
+    } else {
+        return "";
+    }
 
-//slots for adding new (requested) stock data to portfolio and dashboard
-void MainWindow::addRequestedStockData(QString ticker) {
-    StockData *stock = AV_api->getStockData(ticker);
-    curr_portfolio.insert(stock);
+    last_dir = QFileInfo(fileName).absolutePath();
+}
+
+
+//============= load new portfolio ==============//
+void MainWindow::loadPortfolio() {
+    QString openFileName = openFileNamePrompt();
+    if (openFileName == "") {
+        return;
+    }
+
+    //clear any pre-existing portfolio
+    this->removeStocksFromPortfolio(curr_portfolio.getStockList());
+
+
+    //initialize file
+    QFile openFile(openFileName);
+
+    //open file for reading, and check for success
+    if (!openFile.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    //read in portfolio
+    QDataStream bytesIn(&openFile);
+    bytesIn >> curr_portfolio;
+
+    for(QString stock_name : curr_portfolio.getStockList()) {
+        this->addStockDataToTable(stock_name);
+        this->renderRequestedStockData(stock_name);
+        this->simulateGBM(stock_name);
+    }
+}
+
+
+//================== slots for adding new (requested) stock data to portfolio and dashboard ====================//
+//slot for initiating api call
+void MainWindow::fetchData() {
+    //check and warn user of API call limit
+    if(call_count >= call_limit) {
+        QMessageBox::warning(this, "API call limit reached", "Cannot make request");
+        return;
+    } else if(call_count > 15) {
+        QMessageBox::warning(this, "Limited to 25 API calls", QString("remaining calls: %1").arg(QString::number(call_limit - call_count)));
+    }
+
+    //check for duplicate calls
+    if(curr_portfolio.contains(stock_picker->text())) {
+        QMessageBox::warning(this, "Duplicate request", QString("Update %1's allocation instead of making new request").arg(stock_picker->text()));
+        return;
+    }
 
     float userInput = 0.0;
     // Checks that total allocation < 100%
 
     while (true) {
         bool ok;
-        userInput = QInputDialog::getDouble(this, "Allocation Amount",QString("What proportion (0-1) of your funds would you like to allocate to %1").arg(ticker),0,0,1,2,&ok,Qt::WindowFlags(),0.01);
+        userInput = QInputDialog::getDouble(this, "Allocation Amount",QString("What proportion (0-1) of your funds would you like to allocate to %1?").arg(stock_picker->text()),0,0,1,2,&ok,Qt::WindowFlags(),0.01);
 
         // user presses cancel
         if (!ok) {
@@ -262,25 +341,43 @@ void MainWindow::addRequestedStockData(QString ticker) {
         }
     }
 
-    curr_portfolio.allocateInvestment(ticker, userInput);
+    curr_portfolio.allocateInvestment(stock_picker->text(), userInput);
 
     percent_allocated->setText(QString::number(curr_portfolio.getInvestmentUsed()));
 
+    //make api call
+    ++call_count;
+    AV_api.requestStockData(stock_picker->text());
+}
+
+
+//add fetched stock to portfolio
+void MainWindow::addRequestedStockData(QString ticker) {
+    StockData stock = AV_api.getStockData(ticker);
+    curr_portfolio.insert(stock);
+
+    //add stock to graphical components
+    this->addStockDataToTable(ticker);
+    this->renderRequestedStockData(ticker);
+    this->simulateGBM(ticker);
+}
+
+//add stock to data table
+void MainWindow::addStockDataToTable(QString ticker) {
+    StockData stock = curr_portfolio.getStock(ticker);
+
     int r = portfolio_table->rowCount();
     portfolio_table->insertRow(r);
-    qDebug() << r;
 
     //add ticker symbol
     QTableWidgetItem *stock_entry = new QTableWidgetItem();
     stock_entry->setData(Qt::DisplayRole, ticker);
     stock_entry->setFlags(stock_entry->flags() & ~Qt::ItemIsEditable);
     portfolio_table->setItem(r, 0, stock_entry);
-    //portfolio_table->closePersistentEditor(stock_entry);
-    //portfolio_table->setRowHidden(r, false);
 
     //add expected return
     QTableWidgetItem *expected_return_item = new QTableWidgetItem();
-    float expected_return = stock->getExpectedReturn();
+    float expected_return = stock.getExpectedReturn();
     expected_return = qRound(expected_return * pow(10, 4)) / pow(10, 4); //round val to 1000ths
     expected_return_item->setData(Qt::DisplayRole, expected_return);
     expected_return_item->setFlags(expected_return_item->flags() & ~Qt::ItemIsEditable);
@@ -288,31 +385,29 @@ void MainWindow::addRequestedStockData(QString ticker) {
 
     //add risk
     QTableWidgetItem *risk_item = new QTableWidgetItem();
-    float risk = stock->getRisk();
+    float risk = stock.getRisk();
     risk = qRound(risk * pow(10, 4)) / pow(10, 4);
     risk_item->setData(Qt::DisplayRole, risk);
     risk_item->setFlags(risk_item->flags() & ~Qt::ItemIsEditable);
     portfolio_table->setItem(r, 2, risk_item);
 
     QTableWidgetItem *allocation_item = new QTableWidgetItem();
-    allocation_item->setData(Qt::DisplayRole, userInput);
+    allocation_item->setData(Qt::DisplayRole, curr_portfolio.getAllocation(ticker));
     portfolio_table->setItem(r, 3, allocation_item);
 
     QTableWidgetItem *fund_item = new QTableWidgetItem();
-    fund_item->setData(Qt::DisplayRole, curr_portfolio.getAvailableFunds() * userInput);
+    fund_item->setData(Qt::DisplayRole, curr_portfolio.getAvailableFunds() * curr_portfolio.getAllocation(ticker));
     portfolio_table->setItem(r, 4, fund_item);
-
-    this->renderRequestedStockData(ticker);
-    this->simulateGBM(ticker);
 }
 
-//helper extension for addRequested to make charts
+
+//helper extension for add requested stock data to make charts
 void MainWindow::renderRequestedStockData(QString ticker) {
     qDebug() << ticker;
-    StockData *stock_to_render = AV_api->getStockData(ticker);
+    StockData stock_to_render = curr_portfolio.getStock(ticker);
 
-    QMap<QDateTime, StockDataElement> source_data = stock_to_render->getTimeSeries();
-    QMap<QDateTime, float> fifty_day_ma = stock_to_render->getMovingAvgSeries();
+    QMap<QDateTime, StockDataElement> source_data = stock_to_render.getTimeSeries();
+    QMap<QDateTime, float> fifty_day_ma = stock_to_render.getMovingAvgSeries();
     qDebug() << "attained moving average.";
 
     QLineSeries *close_price_line_series = new QLineSeries();
@@ -391,9 +486,9 @@ void MainWindow::changeDisplayedChart() {
 void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
     qDebug() << stocks_to_delete;
     QSet<QString> set_to_delete;
-    for(QString stock : stocks_to_delete) {
-        curr_portfolio.remove(stock);
-        set_to_delete.insert(stock);
+    for(QString stock_name : stocks_to_delete) {
+        curr_portfolio.remove(stock_name);
+        set_to_delete.insert(stock_name);
     }
 
     //iterate over number of stocks to be deleted because tab count changes after each removal
@@ -434,7 +529,9 @@ void MainWindow::removeStockWhenChartClosed(int index) {
 }
 
 
-void MainWindow::updateAvailableFunds(int new_amount) {
+
+//slot for updating allocation amounts for each stock
+void MainWindow::updateAvailableFunds() {
     curr_portfolio.setAvailableFunds(available_funds->text().toInt());
 
     int funds_available = curr_portfolio.getAvailableFunds();
@@ -568,6 +665,7 @@ void MainWindow::compareStocks() {
     QHBoxLayout *tabLayout = new QHBoxLayout(comparisonTab);
     tabLayout->addWidget(combinedChartView);
 
+    compare_viewer->setVisible(true);
     compare_viewer->addTab(comparisonTab, QString("Comparison: %1 vs %2").arg(firstTabName, secondTabName));
     compare_viewer->setCurrentWidget(comparisonTab);
 
@@ -604,8 +702,8 @@ void MainWindow::compareStocks() {
                               .arg(secondTabName)
                               .arg(maxYSecond)
                               .arg(minYSecond)
-                              .arg(StockPortfolio::covariant(curr_portfolio.getStock(firstTabName), curr_portfolio.getStock(secondTabName)))
-                              .arg(StockPortfolio::correlation(curr_portfolio.getStock(firstTabName), curr_portfolio.getStock(secondTabName))));
+                              .arg(StockData::covariant(curr_portfolio.getStock(firstTabName), curr_portfolio.getStock(secondTabName)))
+                              .arg(StockData::correlation(curr_portfolio.getStock(firstTabName), curr_portfolio.getStock(secondTabName))));
                               //.arg(minDateSecond.toString("yyyy-MM-dd"))
                               //.arg(maxDateSecond.toString("yyyy-MM-dd")));
 
@@ -613,7 +711,7 @@ void MainWindow::compareStocks() {
 }
 
 
-//render GBM projections
+//================== render GBM projections ==================//
 void MainWindow::simulateGBM(QString ticker) {
     float T = 1.0;  // years
     int steps = 252;
@@ -624,7 +722,7 @@ void MainWindow::simulateGBM(QString ticker) {
 
     // Generate multiple paths (5)
     for (int i = 0; i < 5; ++i) {
-        QVector<QPointF> gbmPath = AV_api->simulateGBM(ticker, T, steps);
+        QVector<QPointF> gbmPath = curr_portfolio.simulateGBM(ticker, T, steps);
         if (gbmPath.isEmpty()) {
             qDebug() << "GBM simulation failed for ticker:" << ticker;
             continue;

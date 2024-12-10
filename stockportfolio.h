@@ -8,39 +8,44 @@
 
 class StockPortfolio
 {
-    QMap<QString, StockData*> portfolio;
+    QMap<QString, StockData> portfolio;
     QMap<QString, float>  allocation; //relative allocation of investment (i.e. sum(allocation.values()) = 1)
     float investment_used; // Tracks the percentage of funds that has been allocated (sum of allocation values)
     int available_funds; // Amount the individual has to invest
-
-    static QPair<QVector<float>, QVector<float>> commonTimeSeries(StockData* stock1, StockData* stock2, QString type="log");
-
-    static float getMean(QVector<float> list);
-    static float getStandardDeviation(QVector<float> list);
 
 
 public:
     StockPortfolio();
     ~StockPortfolio();
 
-    static float covariant(StockData* stock1, StockData* stock2);
-    static float correlation(StockData* stock1, StockData* stock2);
-
-    void insert(StockData *stock);
+    void insert(StockData stock);
     void remove(QString ticker);
-    StockData *getStock(QString ticker);
+    bool contains(QString ticker);
+    StockData getStock(QString ticker);
     QList<QString> getStockList();
 
     //void allocateInvestment(QVector<float> _allocation);
     void allocateInvestment(QString ticker, float allocation_amount);
+    float getAllocation(QString ticker);
 
+    //*** need to implement ***
     float expectedReturn();
     float risk();
+    //*************************
 
     float getInvestmentUsed();
 
     void setAvailableFunds(int funds);
     int getAvailableFunds();
+
+    friend QDataStream &operator<<(QDataStream &out, const StockPortfolio &portfolio);
+    friend QDataStream &operator>>(QDataStream &in, StockPortfolio &portfolio);
+
+
+    //GBM methods
+    QVector<QPointF> simulateGBM(QString ticker, float T, int steps);
+    float calculateVolatility(QMap<QDateTime, StockDataElement> timeSeries);
+    float calculateAverageReturn(QMap<QDateTime, StockDataElement> timeSeries);
 };
 
 #endif // STOCKPORTFOLIO_H

@@ -25,6 +25,9 @@ public:
     float getLow() const;
     float getClose() const;
     float getVolume() const;
+
+    friend QDataStream &operator<<(QDataStream &out, const StockDataElement &stock_data_element);
+    friend QDataStream &operator>>(QDataStream &in, StockDataElement &stock_data_element);
 };
 
 #endif // STOCKDATAELEMENT_H

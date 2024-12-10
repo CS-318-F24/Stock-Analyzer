@@ -11,9 +11,18 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    AlphaVantageAPI *AV_api;
+    AlphaVantageAPI AV_api;
+    int call_count;
+    int call_limit;
+
+    QString last_dir;
 
     StockPortfolio curr_portfolio;
+
+    //menu actions
+    QMenu *file_menu;
+    QAction *save;
+    QAction *open;
 
     //layout for app window
     QWidget *app;
@@ -31,13 +40,16 @@ class MainWindow : public QMainWindow
     QLabel *portfolio_label;
     QTableWidget *portfolio_table;
 
+    //buttons for portfolio editing and comparing
     QPushButton *edit_portfolio_button;
     QPushButton *compare_button;
 
+    //charts
     QTabWidget *chart_viewer;
     QTabWidget *compare_viewer;
     QTabWidget *GBM_viewer;
 
+    //allocation interface
     QHBoxLayout *fund_stats;
     QLabel *available_funds_text;
     QLineEdit *available_funds;
@@ -51,13 +63,19 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    QString saveFileNamePrompt();
+    QString openFileNamePrompt();
+
 public slots:
     void fetchData(); //for stock data requests from line edit input
-    void saveFileNamePrompt();
+    void savePortfolio();
+    void loadPortfolio();
 
-    void renderRequestedStockData(QString ticker);
     void addRequestedStockData(QString ticker);
 
+    void addStockDataToTable(QString ticker);
+    void renderRequestedStockData(QString ticker);
+    void simulateGBM(QString ticker);
 
     void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
 
@@ -67,9 +85,7 @@ public slots:
 
     void compareStocks();
 
-    void simulateGBM(QString ticker);
-
-    void updateAvailableFunds(int new_amount);
+    void updateAvailableFunds();
 
 
     //old, may deprecate

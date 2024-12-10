@@ -14,6 +14,7 @@ class EditPortfolioDialog : public QDialog
     QListWidget *stockListWidget;
     QPushButton *deleteButton;
 
+
 public:
     EditPortfolioDialog(QWidget *parent = nullptr);
     void setStockList(const QStringList &stocks);
