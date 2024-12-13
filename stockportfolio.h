@@ -28,10 +28,7 @@ public:
     void allocateInvestment(QString ticker, float allocation_amount);
     float getAllocation(QString ticker);
 
-    //*** need to implement ***
     float expectedReturn();
-    float risk();
-    //*************************
 
     float getInvestmentUsed();
 

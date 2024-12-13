@@ -28,14 +28,22 @@ QDataStream &operator>>(QDataStream &in, StockPortfolio &portfolio) {
 }
 
 
+//============== portfolio metrics =================//
+float StockPortfolio::expectedReturn() {
+    float weighted_expected_return = 0;
+    for(QString ticker : portfolio.keys()) {
+        weighted_expected_return += portfolio[ticker].getExpectedReturn() * allocation[ticker];
+    }
+    return weighted_expected_return;
+}
+
 //================= access methods ====================//
 void StockPortfolio::insert(StockData stock) {
     portfolio.insert(stock.getTicker(), stock);
 }
 
 void StockPortfolio::remove(QString ticker) {
-    int removed = portfolio.remove(ticker);
-    qDebug() << "1 if removed" << ticker << ":" << removed;
+    portfolio.remove(ticker);
 }
 
 bool StockPortfolio::contains(QString ticker) {
@@ -53,8 +61,6 @@ QList<QString> StockPortfolio::getStockList() {
 void StockPortfolio::allocateInvestment(QString ticker, float allocation_amount) {
     allocation.insert(ticker, allocation_amount);
     investment_used += allocation_amount;
-    qDebug() << "Total investment used:" << investment_used;
-    qDebug() << "Investment by stock:" << allocation;
 }
 
 float StockPortfolio::getAllocation(QString ticker) {
@@ -132,7 +138,6 @@ float StockPortfolio::calculateVolatility(QMap<QDateTime, StockDataElement> time
 
 QVector<QPointF> StockPortfolio::simulateGBM(QString ticker, float T, int steps) {
     if (!portfolio.contains(ticker)) {
-        qDebug() << "Stock data not found for ticker:" << ticker;
         return QVector<QPointF>();
     }
 
@@ -140,7 +145,6 @@ QVector<QPointF> StockPortfolio::simulateGBM(QString ticker, float T, int steps)
     QMap<QDateTime, StockDataElement> timeSeries = stock.getTimeSeries();
 
     if (timeSeries.isEmpty()) {
-        qDebug() << "Time series data is empty for ticker:" << ticker;
         return QVector<QPointF>();
     }
 

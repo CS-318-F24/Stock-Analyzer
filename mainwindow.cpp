@@ -147,6 +147,11 @@ MainWindow::MainWindow(QWidget *parent)
     portfolio_table->setHorizontalHeaderItem(4, amountInStock);
     control_layout->addWidget(portfolio_table);
 
+    portfolio_return_label = new QLabel("Expected return: ");
+    portfolio_return_label->setMaximumSize(500, 15);
+    portfolio_return_label->setVisible(false);
+    control_layout->addWidget(portfolio_return_label);
+
     //============= edit portfolio button & dialog ==============//
     edit_portfolio_button = new QPushButton("edit");
     edit_portfolio_button->setMaximumWidth(500);
@@ -175,9 +180,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     //========= chart layout =========//
-    QScrollArea *chart_scroll_area = new QScrollArea;
-    QWidget *chart_scroll_content = new QWidget;
-    chart_layout = new QVBoxLayout(chart_scroll_area);
+    chart_layout = new QSplitter();
+    chart_layout->setOrientation(Qt::Vertical);
 
     //tabs for displaying stock close price time series
     chart_viewer = new QTabWidget();
@@ -204,12 +208,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(portfolio_table, &QTableWidget::itemSelectionChanged, this, &MainWindow::changeDisplayedChart);
 
-    chart_scroll_area->setWidget(chart_scroll_content);
-    chart_scroll_area->show();
-
-    dashboard_layout->addWidget(chart_scroll_area, 3);
+    dashboard_layout->addWidget(chart_layout, 3);
     main_layout->addLayout(dashboard_layout);
-
 }
 
 MainWindow::~MainWindow() {
@@ -223,7 +223,7 @@ MainWindow::~MainWindow() {
 QString MainWindow::saveFileNamePrompt() {
     QString fileName = QFileDialog::getSaveFileName(nullptr, "Select save location", last_dir);
     if (!(fileName.isEmpty())) {
-        qDebug() << fileName;
+        //qDebug() << fileName;
         return fileName;
     } else {
         return "";
@@ -356,6 +356,8 @@ void MainWindow::addRequestedStockData(QString ticker) {
     StockData stock = AV_api.getStockData(ticker);
     curr_portfolio.insert(stock);
 
+    this->updateExpectedReturn();
+
     //add stock to graphical components
     this->addStockDataToTable(ticker);
     this->renderRequestedStockData(ticker);
@@ -403,12 +405,10 @@ void MainWindow::addStockDataToTable(QString ticker) {
 
 //helper extension for add requested stock data to make charts
 void MainWindow::renderRequestedStockData(QString ticker) {
-    qDebug() << ticker;
     StockData stock_to_render = curr_portfolio.getStock(ticker);
 
     QMap<QDateTime, StockDataElement> source_data = stock_to_render.getTimeSeries();
     QMap<QDateTime, float> fifty_day_ma = stock_to_render.getMovingAvgSeries();
-    qDebug() << "attained moving average.";
 
     QLineSeries *close_price_line_series = new QLineSeries();
     QLineSeries *fifty_day_ma_line_series = new QLineSeries();
@@ -418,8 +418,6 @@ void MainWindow::renderRequestedStockData(QString ticker) {
 
         fifty_day_ma_line_series->append(it.key().toMSecsSinceEpoch(), it.value());
     }
-
-    qDebug() << "fifty day line series";
 
     QChart *close_time_series = new QChart();
     close_time_series->legend()->hide();
@@ -453,7 +451,14 @@ void MainWindow::renderRequestedStockData(QString ticker) {
 
     chart_viewer->addTab(tabWidget, ticker);
     chart_viewer->setCurrentWidget(tabWidget);
+}
 
+
+//helper for updating the current portfolio's expected return when a new stock is added
+void MainWindow::updateExpectedReturn() {
+    portfolio_return = qRound(curr_portfolio.expectedReturn() * pow(10, 6)) / pow(10, 6); //round val to 1000ths
+    portfolio_return_label->setText(QString("Expected Return: %1").arg(QString::number(portfolio_return, 'f', 6)));
+    portfolio_return_label->setVisible(true);
 }
 
 
@@ -461,7 +466,6 @@ void MainWindow::renderRequestedStockData(QString ticker) {
 void MainWindow::changeDisplayedChart() {
     QList<QTableWidgetSelectionRange> selected_ranges = portfolio_table->selectedRanges();
     if(selected_ranges.isEmpty()) {
-        qDebug() << "selection change without new selection";
         return;
     }
     int selected_row = selected_ranges[selected_ranges.length() - 1].bottomRow();
@@ -484,7 +488,6 @@ void MainWindow::changeDisplayedChart() {
 
 //slot for removing stocks from portfolio and dashboard after editing
 void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
-    qDebug() << stocks_to_delete;
     QSet<QString> set_to_delete;
     for(QString stock_name : stocks_to_delete) {
         curr_portfolio.remove(stock_name);
@@ -514,7 +517,6 @@ void MainWindow::removeStocksFromPortfolio(QList<QString> stocks_to_delete) {
 
 //slot for removing stock table entry when the corresponding stock chart is removed
 void MainWindow::removeStockWhenChartClosed(int index) {
-    qDebug() << index;
     QString ticker = portfolio_table->item(index, 0)->text();
     curr_portfolio.remove(ticker);
 
@@ -724,7 +726,7 @@ void MainWindow::simulateGBM(QString ticker) {
     for (int i = 0; i < 5; ++i) {
         QVector<QPointF> gbmPath = curr_portfolio.simulateGBM(ticker, T, steps);
         if (gbmPath.isEmpty()) {
-            qDebug() << "GBM simulation failed for ticker:" << ticker;
+            //qDebug() << "GBM simulation failed for ticker:" << ticker;
             continue;
         }
 
@@ -763,36 +765,4 @@ void MainWindow::simulateGBM(QString ticker) {
 
     GBM_viewer->addTab(tabWidget, ticker + "_GBM");
     GBM_viewer->setCurrentWidget(tabWidget);
-}
-
-
-
-//______________________________________________________
-//old, may deprecate
-void MainWindow::loadRequestedStockData() {
-
-    QFile stock_data_file = QFile("/Users/mthedlund/0318Project/stock_data/%1.json");
-
-    if (!stock_data_file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Error opening file for writing!";
-        return;
-    }
-
-    QByteArray raw_data = stock_data_file.readAll();
-    QJsonDocument json_doc = QJsonDocument::fromJson(raw_data);
-    if (json_doc.isNull()) {
-        qDebug() << "Error parsing JSON";
-        return;
-    }
-
-    QJsonObject json_obj;
-    if(json_doc.isObject()) {
-        json_obj = json_doc.object();
-        qDebug() << "JSON Object";
-    }
-
-    //what to do here???
-
-    stock_data_file.close();
-
 }

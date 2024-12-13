@@ -46,8 +46,6 @@ StockData::StockData(QJsonObject _data) : time_series(), close_price_list(), ret
     this->makeLogReturns();
     this->calculateExpectedReturn();
     this->calculateRisk();
-
-    qDebug() << "stock data made for " << ticker << ".";
 }
 
 StockData::StockData() {}
@@ -131,7 +129,6 @@ QPair<QVector<float>, QVector<float>> StockData::commonTimeSeries(StockData stoc
         data_reference_stock1 = stock1.getSimpleReturns();
         data_reference_stock2 = stock2.getSimpleReturns();
     } else {
-        qDebug() << "commonTimeSeries(): type" << type << "not supported: supports types 'log' and 'simple'";
         return QPair<QVector<float>, QVector<float>>();
     }
 
@@ -144,10 +141,8 @@ QPair<QVector<float>, QVector<float>> StockData::commonTimeSeries(StockData stoc
             ++counter;
         }
         if(ts_stock1.contains(it.key()) && ts_stock2.contains(it.key())) {
-            qDebug() << "  both stocks have data for" << it.key();
             common_data_stock1.append(data_reference_stock1[counter]);
             common_data_stock2.append(data_reference_stock2[counter]);
-            qDebug() << "\t" << counter;
         }
         ++counter;
     }
@@ -238,9 +233,7 @@ float StockData::covariant(StockData stock1, StockData stock2) {
 
 //class operator
 QDataStream &operator<<(QDataStream &out, const StockData &stock_data) {
-    qDebug() << "saving" << stock_data.ticker << "...";
     out << stock_data.ticker << stock_data.time_series << stock_data.close_price_list << stock_data.returns << stock_data.log_returns << stock_data.expected_return << stock_data.risk;
-    qDebug() << "saved.";
     return out;
 }
 
@@ -278,7 +271,6 @@ float StockData::getRisk() {
 
 QMap<QDateTime, float> StockData::getMovingAvgSeries(QString type) {
     if(!(type == "fifty-day" || type == "two-hundred-day")) {
-        qDebug() << "error: moving average range not supported; supports 'fifty-day' and 'two-hundred-day' moving average.";
         return QMap<QDateTime, float>(); //return empty map
     }
     if(!(moving_avg_series.isEmpty()) && moving_avg_type == type) {
@@ -291,8 +283,6 @@ QMap<QDateTime, float> StockData::getMovingAvgSeries(QString type) {
     } else {
         window_size = 200;
     }
-
-    qDebug() << "getting moving average...";
 
     QList<float> window(window_size);
     for(QMap<QDateTime, StockDataElement>::const_iterator it = time_series.constBegin(); it != time_series.constEnd(); ++it) {
@@ -308,7 +298,6 @@ QMap<QDateTime, float> StockData::getMovingAvgSeries(QString type) {
         }
         moving_avg = moving_avg / window_size;
         moving_avg_series[it.key()] = moving_avg;
-        //qDebug() << "moving average at " << it.key() << " is " << moving_avg;
 
         window.removeFirst();
     }

@@ -23,7 +23,7 @@ void FileDownloader::fileDownloaded(QNetworkReply* reply) {
     downloaded_data = reply->readAll();
     reply->deleteLater();
 
-    //emit a signal
+    //emit a downloaded signal
     emit downloaded();
 }
 

@@ -34,11 +34,13 @@ class MainWindow : public QMainWindow
     QHBoxLayout *dashboard_layout;
 
     QVBoxLayout *control_layout;
-    QVBoxLayout *chart_layout;
+    QSplitter *chart_layout;
     QLabel *search_label;
     QLineEdit *stock_picker;
     QLabel *portfolio_label;
     QTableWidget *portfolio_table;
+    QLabel *portfolio_return_label;
+    float portfolio_return;
 
     //buttons for portfolio editing and comparing
     QPushButton *edit_portfolio_button;
@@ -59,6 +61,8 @@ class MainWindow : public QMainWindow
     QLabel *percent_allocated_text;
     QLineEdit *percent_allocated;
 
+    void updateExpectedReturn();
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -77,19 +81,15 @@ public slots:
     void renderRequestedStockData(QString ticker);
     void simulateGBM(QString ticker);
 
+    void compareStocks();
+
     void removeStocksFromPortfolio(QList<QString> stocks_to_delete);
 
     void removeStockWhenChartClosed(int index);
 
     void changeDisplayedChart(); //displays the chart specified by selected stocks in portfolio viewer
 
-    void compareStocks();
-
     void updateAvailableFunds();
-
-
-    //old, may deprecate
-    void loadRequestedStockData();
 
 };
 #endif // MAINWINDOW_H

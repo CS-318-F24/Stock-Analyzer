@@ -39,9 +39,7 @@ float StockDataElement::getVolume() const{
 
 //saving helper operator
 QDataStream &operator<<(QDataStream &out, const StockDataElement &stock_data_element) {
-    qDebug() << "saving stock data element...";
     out << stock_data_element.date << stock_data_element.open << stock_data_element.high << stock_data_element.low << stock_data_element.close << stock_data_element.volume;
-    qDebug() << "saved element";
     return out;
 }
 

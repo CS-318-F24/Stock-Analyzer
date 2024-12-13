@@ -23,7 +23,7 @@ AlphaVantageAPI::~AlphaVantageAPI() {}
 void AlphaVantageAPI::requestStockData(QString ticker) {
     if(this->stock_data_store.contains(ticker)) {
         emit savedRequestedStockData(ticker);
-        qDebug() << "stock data is cached: no API call necessary for " << ticker;
+        //qDebug() << "stock data is cached: no API call necessary for " << ticker;
         return;
     }
 
